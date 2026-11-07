@@ -1,0 +1,31 @@
+name: fund-agent
+
+services:
+  api:
+    build: .
+    image: fund-agent:0.5
+    container_name: fund-agent
+    ports:
+      - "8000:8000"   # 学生／公共入口
+      - "8001:8000"   # 教师审核入口
+      - "8002:8000"   # 管理后台入口
+      - "8003:8000"   # 接口／健康检查入口
+    environment:
+      APP_DB: /app/data/app.db
+      POLICY_DB: /app/data/staging/policies.db
+      FUND_LLM_MODE: "${FUND_LLM_MODE:-offline}"
+      FUND_LLM_BASE: "${FUND_LLM_BASE:-}"
+      FUND_LLM_KEY: "${FUND_LLM_KEY:-}"
+      FUND_LLM_MODEL: "${FUND_LLM_MODEL:-}"
+      AUTH_MODE: "${AUTH_MODE:-dev}"
+      CAS_BASE: "${CAS_BASE:-}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

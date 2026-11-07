@@ -1,0 +1,16 @@
+services:
+  fund-agent:
+    image: fund-agent:0.6
+    container_name: zizhu-agent
+    ports:
+      - "127.0.0.1:9100:8000"
+    environment:
+      APP_DB: /app/data/app.db
+      POLICY_DB: /app/data/staging/policies.db
+      FUND_LLM_MODE: offline
+      AUTH_MODE: dev
+      PUBLIC_BASE_PATH: /ZizhuAgent
+      LOG_LEVEL: INFO
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
