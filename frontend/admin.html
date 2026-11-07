@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>资助政策智能体 · 管理后台</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>管理后台</h1>
+      <div class="sub">政策核文与发布、版本回滚、账号权限、导出审批、报送报表、审计、字典、校级分档</div>
+    </div>
+    <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录管理员账号</a></div>
+  </header>
+
+  <nav>
+    <a id="nav-reg" href="admin.html?tab=registrations">注册审核</a>
+    <a href="review.html">任务复核台</a>
+    <a class="on" href="admin.html">管理后台</a>
+  </nav>
+
+  <div class="disclaimer">未核文的政策不得发布（I-7）；发布只生成快照，不删除历史版本；审计表在数据库层禁改禁删（I-5）。</div>
+
+  <div class="tabs" id="tabs">
+    <button data-tab="policy" class="on">政策核文</button>
+    <button data-tab="ingest">文档入库</button>
+    <button data-tab="registrations">注册审核</button>
+    <button data-tab="versions">版本与回滚</button>
+    <button data-tab="audit">审计日志</button>
+    <button data-tab="dict">字段字典</button>
+    <button data-tab="tiers">校级分档</button>
+    <button data-tab="users">账号权限</button>
+    <button data-tab="exports">导出审批</button>
+    <button data-tab="report">报送报表</button>
+  </div>
+
+  <section id="tab-policy">
+    <div class="actions" style="margin-bottom:10px">
+      <select id="doc-status" style="max-width:200px">
+        <option value="">全部状态</option>
+        <option value="pending_verify">待核（pending_verify）</option>
+        <option value="verified">已核（verified）</option>
+      </select>
+      <button class="ghost" onclick="loadDocs()">刷新</button>
+      <span class="hint" id="doc-count"></span>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>文号</th><th>标题</th><th>状态</th><th>字数</th><th>核对</th><th>操作</th></tr></thead>
+      <tbody id="docs"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-ingest" class="hidden">
+    <div class="disclaimer">本地上传只生成草稿（待核文），核文通过并切块发布后才进入学生端检索；同一文件按 SHA256 去重。</div>
+    <div class="small" style="line-height:1.9;margin-bottom:12px">
+      <b>上传入库四步</b><br>
+      第 1 步：选择本地文件（.docx／.pdf／.txt／.md，≤10MB），点“上传并入库”。<br>
+      第 2 步：系统解析正文生成草稿，状态“待核文”；此时条款不可检索、不可发布。<br>
+      第 3 步：到“政策核文”核对文号、发布机关、生效日期，点“核文通过”。<br>
+      第 4 步：点“切块”按条款切开，再到“版本与回滚”发布；旧版本仍可回滚。
+    </div>
+    <div class="actions" style="margin-bottom:10px">
+      <input type="file" id="up-file" accept=".docx,.pdf,.txt,.md" style="max-width:320px">
+      <button class="primary" onclick="uploadDoc()">上传并入库</button>
+      <span class="hint" id="up-msg"></span>
+    </div>
+    <div id="up-result" class="small" style="line-height:1.9"></div>
+  </section>
+
+  <section id="tab-registrations" class="hidden">
+    <div class="small" style="line-height:1.9;margin-bottom:10px">
+      <b>审核四步</b><br>
+      第 1 步：核对昵称、学校与申请时间；手机号已脱敏，仅在需要联系本人时查看。<br>
+      第 2 步：选择角色——学生本人／高校教师（辅导员）／审计员／管理员，默认学生本人。<br>
+      第 3 步：点“通过”，账号立即可登录；点“驳回”必须填理由，申请人登录时会看到。<br>
+      第 4 步：通过后如需改密，到“账号权限”点“重置密码”，临时密码只显示一次，请线下告知本人。
+    </div>
+    <div class="actions" style="margin-bottom:10px">
+      <select id="reg-status" style="max-width:200px" onchange="loadRegistrations()">
+        <option value="pending">待审核</option>
+        <option value="active">已通过</option>
+        <option value="rejected">已驳回</option>
+        <option value="">全部</option>
+      </select>
+      <button class="ghost" onclick="loadRegistrations()">刷新</button>
+      <span class="hint" id="reg-count"></span>
+    </div>
+    <table>
+      <thead><tr><th>昵称</th><th>学校</th><th>手机（脱敏）</th><th>申请时间</th><th>状态</th><th>角色</th><th>操作</th></tr></thead>
+      <tbody id="regs"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-versions" class="hidden">
+    <table>
+      <thead><tr><th>版本</th><th>发布时间</th><th>发布人</th><th>文件</th><th>条款</th><th>原子</th><th>状态</th><th>操作</th></tr></thead>
+      <tbody id="versions"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-audit" class="hidden">
+    <div class="actions" style="margin-bottom:10px"><button class="ghost" onclick="loadAudit()">刷新</button>
+      <span class="hint">只追加，不提供修改与删除入口</span></div>
+    <table>
+      <thead><tr><th>时间</th><th>操作人</th><th>角色</th><th>动作</th><th>对象</th><th>详情</th></tr></thead>
+      <tbody id="audit"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-dict" class="hidden">
+    <table>
+      <thead><tr><th>字段</th><th>名称</th><th>类型</th><th>取值</th><th>说明</th></tr></thead>
+      <tbody id="dict"></tbody>
+    </table>
+    <div class="small" style="margin-top:8px">字典改版须跑 <code>tools\atomize.py regress</code>，页面只读展示。</div>
+  </section>
+
+  <section id="tab-tiers" class="hidden">
+    <div class="panel" id="tier-form">
+      <div class="group-title">新增分档（未配置时档位恒为需核实）</div>
+      <div class="grid">
+        <div><label>档位名称</label><input type="text" id="t-level" placeholder="如：一等"></div>
+        <div><label>对应收入区间</label><input type="text" id="t-band" placeholder="如：低保及特困"></div>
+        <div><label>金额（元/年）</label><input type="number" id="t-amount" placeholder="如 5000"></div>
+        <div><label>备注</label><input type="text" id="t-note" placeholder="依据文件或说明"></div>
+      </div>
+      <button class="primary" onclick="addTier()">保存</button>
+      <span class="hint" id="tier-msg"></span>
+    </div>
+    <table>
+      <thead><tr><th>档位</th><th>收入区间</th><th>金额</th><th>备注</th></tr></thead>
+      <tbody id="tiers"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-users" class="hidden">
+    <div class="actions" style="margin-bottom:10px">
+      <button class="ghost" onclick="loadUsers()">刷新</button>
+      <span class="hint">停用后该账号任何接口一律 403 并写审计；唯一启用的管理员不可停用</span>
+    </div>
+    <table>
+      <thead><tr><th>账号</th><th>昵称</th><th>姓名</th><th>角色</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+      <tbody id="users"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-exports" class="hidden">
+    <div class="actions" style="margin-bottom:10px">
+      <select id="exp-status" style="max-width:200px" onchange="loadExports()">
+        <option value="pending">待审批</option>
+        <option value="approved">已批准</option>
+        <option value="rejected">已驳回</option>
+        <option value="">全部</option>
+      </select>
+      <button class="ghost" onclick="loadExports()">刷新</button>
+      <span class="hint">导出件对外报送前须审批；批准后导出 Markdown 末尾会带审批人</span>
+    </div>
+    <table>
+      <thead><tr><th>ID</th><th>任务</th><th>申请人</th><th>说明</th><th>状态</th><th>审批</th><th>操作</th></tr></thead>
+      <tbody id="exports"></tbody>
+    </table>
+    <div class="actions" id="exp-note-wrap" style="margin-top:10px">
+      <input type="text" id="exp-note" placeholder="审批备注（驳回必填）" style="flex:1;min-width:240px">
+    </div>
+  </section>
+
+  <section id="tab-report" class="hidden">
+    <div class="actions" style="margin-bottom:10px">
+      <input type="number" id="rep-days" value="7" min="1" max="365" style="max-width:100px">
+      <button class="primary" onclick="loadReport()">生成报表</button>
+      <a class="ghost" id="rep-csv" href="api/report/export.csv?days=7">下载 CSV</a>
+      <span class="hint">统计按任务创建时间取窗口；附政策版本，便于报送留档</span>
+    </div>
+    <div class="panel" id="rep-sum"></div>
+    <table>
+      <thead><tr><th>项目</th><th>可申请</th><th>需核实</th><th>暂不适用</th></tr></thead>
+      <tbody id="rep-projects"></tbody>
+    </table>
+  </section>
+
+</div>
+
+<div id="mask" class="modal-mask">
+  <div class="modal">
+    <h3>核对文号与生效日期</h3>
+    <div class="doc" id="v-doc"></div>
+    <div class="grid">
+      <div><label>文号</label><input type="text" id="v-docno"></div>
+      <div><label>发布机关</label><input type="text" id="v-issuer"></div>
+      <div><label>生效日期</label><input type="text" id="v-effective" placeholder="YYYY-MM-DD"></div>
+      <div><label>核对人</label><input type="text" id="v-verifier" value="admin_demo"></div>
+    </div>
+    <div class="foot">
+      <button class="ghost" onclick="closeModal()">取消</button>
+      <button class="primary" id="v-save">确认核对</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+const H = { "Content-Type": "application/json" };
+let DOCS = [], CUR = null, ME_ROLE = "admin";
+const IS_ADMIN = () => ME_ROLE === "admin";
+
+function fmt(s, dateOnly) {
+  if (!s) return "—";
+  const d = new Date(s);
+  const text = d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }).replace(/\//g, "-");
+  return dateOnly ? text.slice(0, 10) : text;
+}
+
+async function loadDocs() {
+  const st = document.getElementById("doc-status").value;
+  const res = await fetch("api/policy/docs" + (st ? "?status=" + st : ""), { headers: H });
+  const data = await res.json();
+  DOCS = data.items;
+  document.getElementById("doc-count").textContent = `共 ${data.count} 份`;
+  document.getElementById("docs").innerHTML = DOCS.map(d => {
+    const v = d.verify;
+    const state = d.status === "verified" || d.status === "published" ? `<span class="tier eligible">${d.status}</span>` :
+      `<span class="tier need_check">${d.status}</span>`;
+    const verifyInfo = v ? `${v.verifier} ${fmt(v.verified_at, true)}` : "—";
+    return `<tr>
+      <td>${d.id}</td>
+      <td>${d.doc_no || "—"}</td>
+      <td>${d.title || ""}<div class="small">${(d.url || "").slice(0, 48)}…</div></td>
+      <td>${state}</td>
+      <td>${d.chars}</td>
+      <td class="small">${verifyInfo}</td>
+      <td>
+        ${IS_ADMIN() ? `<button class="ghost" onclick="openVerify(${d.id})">核对</button>
+        ${d.status === "verified" || d.status === "published" ? `<button class="ghost" onclick="splitDoc(${d.id})">切块</button>
+        <button class="ghost" onclick="publish(${d.id})">发布</button>` : `<span class="small">先核文</span>`}`
+        : `<span class="small">只读</span>`}
+      </td></tr>`;
+  }).join("");
+}
+
+async function splitDoc(id) {
+  if (!confirm(`确认对 doc ${id} 切块？会按“第X条”重建该政策的条款。`)) return;
+  const res = await fetch(`api/policy/${id}/split`, { method: "POST", headers: H });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail || "切块失败"); return; }
+  alert(`切块完成：${data.clauses} 条条款。下一步到“版本与回滚”发布。`);
+  loadDocs();
+}
+
+function openVerify(id) {
+  CUR = DOCS.find(d => d.id === id);
+  document.getElementById("v-doc").textContent = `#${id} ${CUR.title || ""}`;
+  document.getElementById("v-docno").value = CUR.doc_no || "";
+  document.getElementById("v-issuer").value = CUR.issuer || "";
+  document.getElementById("v-effective").value = CUR.effective_from || "";
+  document.getElementById("mask").style.display = "flex";
+}
+
+async function saveVerify() {
+  if (!CUR) return;
+  const body = {
+    doc_no: document.getElementById("v-docno").value.trim(),
+    issuer: document.getElementById("v-issuer").value.trim(),
+    effective_from: document.getElementById("v-effective").value.trim(),
+    verifier: document.getElementById("v-verifier").value.trim()
+  };
+  const res = await fetch(`api/policy/${CUR.id}/verify`, { method: "POST", headers: H, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) { alert(typeof data.detail === "string" ? data.detail : "核对失败"); return; }
+  closeModal(); await loadDocs();
+}
+
+async function publish(id) {
+  if (!confirm(`确认发布文档 #${id} 的当前已核文内容？发布会生成新的知识库版本，学生端检索随即切换。`)) return;
+  const res = await fetch(`api/policy/${id}/publish`, { method: "POST", headers: H });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail); return; }
+  alert(`已发布版本 ${data.version_id}：文件 ${data.docs} 份、条款 ${data.clauses} 条、原子 ${data.atoms} 条`);
+  await Promise.all([loadDocs(), loadVersions()]);
+}
+
+async function loadVersions() {
+  const data = await (await fetch("api/policy/versions", { headers: H })).json();
+  document.getElementById("versions").innerHTML = data.count ? data.items.map(v => `<tr>
+    <td>${v.version_id}</td><td class="small">${fmt(v.created_at)}</td><td>${v.published_by}</td>
+    <td>${v.docs}</td><td>${v.clauses}</td><td>${v.atoms}</td>
+    <td><span class="tier ${v.status === "current" ? "eligible" : ""}">${v.status}</span></td>
+    <td>${v.status === "current" ? `<span class="small">当前生效</span>` : (IS_ADMIN() ? `<button class="ghost" onclick="rollback('${v.version_id}')">回滚到此版</button>` : `<span class="small">只读</span>`)}</td></tr>`).join("") :
+    `<tr><td colspan="8" class="small">还没有发布过版本。</td></tr>`;
+}
+
+async function rollback(id) {
+  if (!confirm(`确认回滚到版本 ${id}？学生端检索与判等会立即改用该版本内容。`)) return;
+  const res = await fetch("api/policy/rollback", { method: "POST", headers: H, body: JSON.stringify({ version_id: id }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail); return; }
+  await loadVersions();
+}
+
+async function loadAudit() {
+  const data = await (await fetch("api/audit?limit=60", { headers: H })).json();
+  document.getElementById("audit").innerHTML = data.items.map(a => `<tr>
+    <td class="small">${fmt(a.created_at)}</td><td>${a.actor}</td><td>${a.role}</td>
+    <td>${a.action}</td><td class="small">${a.target || ""}</td>
+    <td class="small">${(a.detail || "").slice(0, 120)}</td></tr>`).join("");
+}
+
+async function loadDict() {
+  const data = await (await fetch("api/fields", { headers: H })).json();
+  document.getElementById("dict").innerHTML = data.fields.map(f => `<tr>
+    <td><code>${f.code}</code></td><td>${f.name}</td><td>${f.type}</td>
+    <td class="small">${(f.values || []).join("／") || "—"}</td><td class="small">${f.description || ""}</td></tr>`).join("");
+}
+
+async function loadTiers() {
+  const data = await (await fetch("api/school-tiers", { headers: H })).json();
+  document.getElementById("tiers").innerHTML = data.count ? data.items.map(t => `<tr>
+    <td>${t.level}</td><td>${t.income_band || ""}</td><td>${t.amount || ""}</td><td class="small">${t.note || ""}</td></tr>`).join("") :
+    `<tr><td colspan="4" class="small">${data.note}</td></tr>`;
+}
+
+async function addTier() {
+  const body = {
+    level: document.getElementById("t-level").value.trim(),
+    income_band: document.getElementById("t-band").value.trim(),
+    amount: Number(document.getElementById("t-amount").value) || null,
+    note: document.getElementById("t-note").value.trim()
+  };
+  const res = await fetch("api/school-tiers", { method: "POST", headers: H, body: JSON.stringify(body) });
+  const data = await res.json();
+  document.getElementById("tier-msg").textContent = res.ok ? "已保存" : data.detail;
+  if (res.ok) loadTiers();
+}
+
+async function loadUsers() {
+  const data = await (await fetch("api/users", { headers: H })).json();
+  document.getElementById("users").innerHTML = (data.items || []).map(u => `<tr>
+    <td><code>${u.user_id}</code></td><td>${u.nickname || "—"}</td><td>${u.name}</td><td>${u.role}</td>
+    <td>${u.enabled ? `<span class="tier eligible">启用</span>` : `<span class="tier need_check">停用</span>`}</td>
+    <td class="small">${fmt(u.updated_at)}</td>
+    <td>${IS_ADMIN() ? `<button class="${u.enabled ? "danger" : "ghost"}" onclick="toggleUser('${u.user_id}', ${u.enabled ? "false" : "true"})">
+      ${u.enabled ? "停用" : "启用"}</button>
+      ${u.enabled ? `<button class="ghost" onclick="resetPwd('${u.user_id}')">重置密码</button>` : ""}`
+      : `<span class="small">只读</span>`}</td></tr>`).join("");
+}
+
+async function toggleUser(userId, enabled) {
+  if (!confirm(`确认${enabled ? "启用" : "停用"}账号 ${userId}？`)) return;
+  const res = await fetch(`api/users/${userId}/enable`, { method: "POST", headers: H,
+    body: JSON.stringify({ enabled }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail); return; }
+  loadUsers();
+}
+
+async function resetPwd(userId) {
+  if (!confirm("确认重置该账号密码？旧密码会立即失效，临时密码只显示一次。")) return;
+  const res = await fetch(`api/admin/users/${userId}/reset-password`, { method: "POST", headers: H });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail || "重置失败"); return; }
+  try { await navigator.clipboard.writeText(data.temp_password); } catch (e) { /* 浏览器不允许时手抄 */ }
+  alert(`临时密码：${data.temp_password}\n\n${data.guidance}\n\n（已尝试复制到剪贴板，失败请手抄）`);
+  loadUsers();
+}
+
+async function loadRegistrations() {
+  const st = document.getElementById("reg-status").value;
+  const data = await (await fetch("api/admin/registrations" + (st ? "?status=" + st : ""), { headers: H })).json();
+  document.getElementById("reg-count").textContent = `共 ${data.count || 0} 条`;
+  const roleOptions = (id) => ["student", "counselor", "auditor", "admin"].map(r =>
+    `<option value="${r}" ${r === "student" ? "selected" : ""}>${({student:"学生本人",counselor:"高校教师／辅导员",auditor:"审计员",admin:"管理员"})[r]}</option>`).join("");
+  document.getElementById("regs").innerHTML = data.count ? data.items.map(r => `<tr>
+    <td><b>${r.nickname || r.user_id}</b><br><span class="small">${r.user_id}</span></td>
+    <td>${r.school || "—"}</td><td>${r.phone || "—"}</td>
+    <td class="small">${fmt(r.created_at)}</td>
+    <td>${r.status === "pending" ? "待审核" : (r.status === "active" ? "已通过" : "已驳回")}
+      ${r.review_note ? `<div class="small">理由：${r.review_note}</div>` : ""}</td>
+    <td>${r.status === "pending" ? `<select id="role-${r.user_id}" style="max-width:150px">${roleOptions(r.user_id)}</select>` : ({student:"学生本人",counselor:"高校教师／辅导员",auditor:"审计员",admin:"管理员"})[r.role] || r.role}</td>
+    <td>${r.status === "pending" ? `<button class="primary" onclick="approveReg('${r.user_id}')">通过</button>
+      <button class="danger" onclick="rejectReg('${r.user_id}')">驳回</button>` : "—"}</td></tr>`).join("") :
+    `<tr><td colspan="7" class="small">暂无注册申请。学生在本系统登录页提交后，这里会出现待审核记录。</td></tr>`;
+}
+
+async function approveReg(userId) {
+  const sel = document.getElementById("role-" + userId);
+  const role = (sel || {}).value || "student";
+  const roleName = sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent : role;
+  if (!confirm(`确认通过 ${userId} 的注册申请？分配角色：${roleName}`)) return;
+  const res = await fetch(`api/admin/registrations/${userId}/review`, { method: "POST", headers: H,
+    body: JSON.stringify({ action: "approve", role }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail || "操作失败"); return; }
+  alert("已通过。该账号现在可以用注册时的昵称＋密码登录。");
+  loadRegistrations(); loadUsers();
+}
+
+async function rejectReg(userId) {
+  const note = prompt("请填写驳回理由（申请人登录时会看到）：");
+  if (note === null) return;
+  if (!note.trim()) { alert("驳回必须填理由"); return; }
+  const res = await fetch(`api/admin/registrations/${userId}/review`, { method: "POST", headers: H,
+    body: JSON.stringify({ action: "reject", note: note.trim() }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail || "操作失败"); return; }
+  loadRegistrations();
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",").pop());
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadDoc() {
+  const file = document.getElementById("up-file").files[0];
+  const msg = document.getElementById("up-msg");
+  if (!file) { msg.textContent = "请先选择文件"; return; }
+  if (file.size > 10 * 1024 * 1024) { msg.textContent = "文件超过 10MB"; return; }
+  msg.textContent = "上传解析中…";
+  const content_b64 = await fileToBase64(file);
+  const res = await fetch("api/policy/upload", { method: "POST", headers: H,
+    body: JSON.stringify({ filename: file.name, content_b64 }) });
+  const data = await res.json();
+  if (!res.ok) { msg.textContent = data.detail || "上传失败"; return; }
+  msg.textContent = "已入库（待核文）";
+  document.getElementById("up-result").innerHTML = `
+    <div class="disclaimer">已生成草稿：doc ${data.doc_id}《${data.title}》，解析方式 ${data.method}，
+      正文 ${data.chars} 字，状态 ${data.status}。</div>
+    <b>接下来按顺序做</b><br>${(data.guidance || []).join("<br>")}<br>
+    <button class="primary" style="margin-top:10px" onclick="document.querySelector('[data-tab=policy]').click()">去“政策核文”填写文号</button>`;
+  loadDocs();
+}
+
+async function loadExports() {
+  const st = document.getElementById("exp-status").value;
+  const data = await (await fetch("api/export-requests" + (st ? "?status=" + st : ""), { headers: H })).json();
+  document.getElementById("exports").innerHTML = data.count ? data.items.map(e => `<tr>
+    <td>${e.id}</td><td><code>${e.task_id}</code></td><td>${e.requester}</td>
+    <td class="small">${e.note || "—"}</td><td>${e.status}</td>
+    <td class="small">${e.reviewer ? e.reviewer + " " + fmt(e.reviewed_at, true) : "—"}</td>
+    <td>${IS_ADMIN() && e.status === "pending" ? `<button class="primary" onclick="reviewExport(${e.id},'approve')">批准</button>
+      <button class="danger" onclick="reviewExport(${e.id},'reject')">驳回</button>` : (e.status === "pending" ? `<span class="small">待管理员审批</span>` : "—")}</td></tr>`).join("") :
+    `<tr><td colspan="7" class="small">暂无记录。</td></tr>`;
+}
+
+async function reviewExport(id, action) {
+  const note = document.getElementById("exp-note").value.trim();
+  if (action === "reject" && !note) { alert("驳回须填写审批备注"); return; }
+  if (!confirm(`确认${action === "approve" ? "批准" : "驳回"}导出申请 #${id}？`)) return;
+  const res = await fetch(`api/export-requests/${id}/review`, { method: "POST", headers: H,
+    body: JSON.stringify({ action, note }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail); return; }
+  loadExports();
+}
+
+async function loadReport() {
+  const days = Number(document.getElementById("rep-days").value) || 7;
+  document.getElementById("rep-csv").href = `/api/report/export.csv?days=${days}`;
+  const data = await (await fetch(`api/report/summary?days=${days}`, { headers: H })).json();
+  document.getElementById("rep-sum").innerHTML = `
+    <div class="group-title">近 ${data.window_days} 天（自 ${fmt(data.since, true)}）</div>
+    <div class="grid">
+      <div><div class="small">任务数</div><div style="font-size:22px">${data.tasks}</div></div>
+      <div><div class="small">状态分布</div><div class="small">${Object.entries(data.by_status || {}).map(([k, v]) => k + " " + v).join("　") || "—"}</div></div>
+      <div><div class="small">结论分布</div><div class="small">${Object.entries(data.conclusions || {}).map(([k, v]) => k + " " + v).join("　") || "—"}</div></div>
+      <div><div class="small">政策版本</div><div class="small">${data.policy_version || "无"}</div></div>
+    </div>
+    <div class="small" style="margin-top:8px">${data.disclaimer}</div>`;
+  document.getElementById("rep-projects").innerHTML = (data.projects || []).map(p => `<tr>
+    <td>${p.project_id} ${p.project_name}</td><td>${p["可申请"]}</td><td>${p["需核实"]}</td><td>${p["暂不适用"]}</td></tr>`).join("");
+}
+
+function closeModal() { document.getElementById("mask").style.display = "none"; }
+document.getElementById("v-save").addEventListener("click", saveVerify);
+
+function showTab(key) {
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x.dataset.tab === key));
+  document.querySelectorAll("section[id^=tab-]").forEach(s => s.classList.add("hidden"));
+  const panel = document.getElementById("tab-" + key);
+  if (panel) panel.classList.remove("hidden");
+}
+
+document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+const initialTab = new URLSearchParams(location.search).get("tab");
+if (initialTab) showTab(initialTab);
+
+loadDocs(); loadVersions(); loadAudit(); loadDict(); loadTiers();
+loadUsers(); loadRegistrations(); loadExports(); loadReport();
+</script>
+<script>
+(async function () {
+  try {
+    const me = await (await fetch("api/auth/me")).json();
+    if (!me.logged_in || !["admin", "auditor"].includes(me.role)) {
+      location.href = "login.html";
+      return;
+    }
+    ME_ROLE = me.role;
+    if (!IS_ADMIN()) {
+      ["ingest", "registrations"].forEach(key => {
+        const tab = document.querySelector(`#tabs button[data-tab="${key}"]`);
+        if (tab) tab.remove();
+        const section = document.getElementById("tab-" + key);
+        if (section) section.remove();
+      });
+      const navReg = document.getElementById("nav-reg");
+      if (navReg) navReg.style.display = "none";
+      const tierForm = document.getElementById("tier-form");
+      if (tierForm) tierForm.style.display = "none";
+      const expNote = document.getElementById("exp-note-wrap");
+      if (expNote) expNote.style.display = "none";
+      const active = document.querySelector("#tabs button.on");
+      if (!active || !document.getElementById("tab-" + active.dataset.tab)) showTab("policy");
+      loadDocs(); loadVersions(); loadUsers(); loadExports();
+    }
+    const b = document.getElementById("me-badge");
+    if (!b) return;
+    b.innerHTML = `已登录：${me.nickname}（${me.role}）` +
+      (me.must_change ? ` · <b style="color:#b45309">临时密码，请尽快改密</b>` : "") +
+      ` · <a href="#" onclick="fetch('api/auth/logout',{method:'POST'}).then(()=>location.reload());return false">退出</a>`;
+  } catch (e) { /* 未登录保持演示态 */ }
+})();
+</script>
+</body>
+</html>

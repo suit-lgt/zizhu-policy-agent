@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>资助政策智能体 · 登录与注册</title>
+<link rel="stylesheet" href="static/style.css">
+<style>
+  body{background:#f5f7fb}
+  .auth-wrap{max-width:760px;margin:0 auto;padding:36px 20px 60px}
+  .brand{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0f766e,#14b8a6);
+        color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
+  .brand h1{font-size:22px;margin:0}
+  .brand .sub{font-size:13px;color:#64748b;margin-top:2px}
+  .intro-line{max-width:640px;margin:18px auto 0;text-align:center;font-size:13px;color:#64748b;line-height:1.8}
+  .intro-line a{color:#0f766e;text-decoration:none;border-bottom:1px dashed #0f766e;white-space:nowrap}
+  .intro-line a:hover{color:#115e59}
+  .auth-main{max-width:520px;margin:16px auto 0}
+  .card{background:#fff;border:1px solid #e6ebf2;border-radius:14px;padding:22px;
+        box-shadow:0 8px 24px rgba(15,23,42,.06)}
+  .about-panel{display:none;max-width:640px;margin:14px auto 0;background:#fff;border:1px solid #e6ebf2;
+               border-radius:14px;padding:20px 24px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+  .about-panel.show{display:block}
+  .about-panel h2{font-size:16px;margin:0 0 6px}
+  .about-panel .lead{font-size:13px;color:#64748b;margin-bottom:10px;line-height:1.7}
+  .about-panel .close{float:right;border:0;background:transparent;font-size:20px;color:#94a3b8;cursor:pointer;line-height:1}
+  .points{list-style:none;padding:0;margin:10px 0 0}
+  .points li{display:flex;gap:10px;font-size:13px;color:#334155;line-height:1.65;margin-bottom:12px}
+  .points b{color:#0f766e}
+  .dot{flex:none;width:22px;height:22px;border-radius:50%;background:#e6f7f4;color:#0f766e;
+       display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .tabs2{display:flex;gap:8px;margin-bottom:16px}
+  .tabs2 button{flex:1;padding:10px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;
+                font-size:14px;cursor:pointer;color:#475569}
+  .tabs2 button.on{background:#0f766e;border-color:#0f766e;color:#fff;font-weight:600}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:13px;color:#334155;margin-bottom:6px}
+  .field label span{color:#94a3b8;font-weight:400}
+  .field input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #dbe3ec;
+               border-radius:9px;font-size:14px;background:#fff}
+  .field input:focus{outline:none;border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.12)}
+  .hintline{font-size:12px;color:#94a3b8;margin-top:4px;line-height:1.6}
+  .btn-main{width:100%;padding:11px;border:0;border-radius:9px;background:#0f766e;color:#fff;
+            font-size:15px;font-weight:600;cursor:pointer}
+  .btn-main:hover{background:#115e59}
+  .btn-ghost{padding:8px 12px;border:1px solid #dbe3ec;border-radius:8px;background:#fff;cursor:pointer;font-size:13px}
+  .msg{min-height:20px;font-size:13px;margin-top:10px;color:#b45309;line-height:1.65}
+  .msg.ok{color:#0f766e}
+  .steps{background:#f0fdfa;border:1px solid #ccfbf1;border-radius:10px;padding:12px 14px;margin-top:12px;
+         font-size:13px;color:#134e4a;line-height:1.8}
+  .steps b{display:block;margin-bottom:4px}
+  .status-card{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:14px;margin-top:12px;
+               font-size:13px;color:#334155;line-height:1.8;display:none}
+  .status-card code{background:#e2e8f0;padding:1px 6px;border-radius:5px}
+  .foot{font-size:12px;color:#94a3b8;text-align:center;margin-top:26px;line-height:1.8}
+  .topbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#64748b}
+  .who{display:none;align-items:center;gap:10px}
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">助</div>
+      <div>
+        <h1>资助政策智能体</h1>
+        <div class="sub">国家 · 广东省 · 校级三级政策口径｜每条结论可回点原文</div>
+      </div>
+    </div>
+    <div class="who" id="who">
+      <span id="who-text"></span>
+      <button class="btn-ghost" onclick="logout()">退出登录</button>
+    </div>
+  </div>
+
+  <div class="intro-line">
+    面向学生、家长与高校老师：政策经人工核文、依据可回点原文、版本可回滚。
+    <a href="#" onclick="openAbout();return false;">了解系统定位与四条创新点</a>
+  </div>
+
+  <div class="about-panel" id="about-panel">
+    <button class="close" onclick="closeAbout()" aria-label="收起">×</button>
+      <h2>把“我家的情况”翻译成“能申请什么、要准备什么、去哪里办”</h2>
+      <div class="lead">面向学生本人、家长和高校老师。答案只引用已核文的政策条款，检索不到就明确拒答，不给“想当然”的结论。</div>
+      <ul class="points">
+        <li><span class="dot">1</span><div><b>政策是真的</b>：采集与本地文档入口都要人工核文（文号／发布机关／生效日期），核文前不发布、不对外答复。</div></li>
+        <li><span class="dot">2</span><div><b>依据能回点</b>：每条结论挂条款原文与字符位置，点开就能看到出处；引用由系统拼装，不由模型编。</div></li>
+        <li><span class="dot">3</span><div><b>版本可回滚</b>：每次发布把该版本条款与原子固化快照，回滚后问答与初判真正切回旧版内容。</div></li>
+        <li><span class="dot">4</span><div><b>人工兜底</b>：初判结果可提交复核、申诉，全过程留痕，不以系统结论替代学校认定。</div></li>
+      </ul>
+      <div class="steps">
+        <b>使用顺序</b>
+        注册账号 → 等管理员审核 → 登录填学籍与家庭情况 → 勾选隐私授权 → 看三档结论与依据 → 按需提交复核或导出材料。
+      </div>
+  </div>
+
+  <div class="auth-main">
+    <div class="card">
+      <div class="tabs2">
+        <button id="tab-login" class="on" onclick="switchTab('login')">登录</button>
+        <button id="tab-reg" onclick="switchTab('reg')">注册新账号</button>
+        <button id="tab-pass" onclick="switchTab('pass')" style="display:none">修改密码</button>
+      </div>
+
+      <div id="pane-login">
+        <div class="field">
+          <label>昵称 <span>（登录名）</span></label>
+          <input id="li-nick" autocomplete="username" placeholder="注册时填写的昵称">
+        </div>
+        <div class="field">
+          <label>密码</label>
+          <input id="li-pass" type="password" autocomplete="current-password" placeholder="至少 8 位，含字母和数字">
+        </div>
+        <button class="btn-main" onclick="doLogin()">登录</button>
+        <div class="msg" id="li-msg"></div>
+        <div class="hintline">忘记密码：联系学校资助中心管理员，在“账号权限 → 重置密码”生成临时密码（只显示一次）。<br>
+          还没有账号？点上方“注册新账号”，提交后等管理员审核。</div>
+        <div class="steps">
+          <b>登录步骤</b>
+          第 1 步：填昵称和密码；第 2 步：点登录；第 3 步：学生进入学生端，教师／管理员进入对应工作台；第 4 步：如提示“待审核”，请等管理员通过后再试。
+        </div>
+      </div>
+
+      <div id="pane-pass" style="display:none">
+        <div class="field">
+          <label>原密码</label>
+          <input id="cp-old" type="password" autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label>新密码 <span>（至少 8 位，含字母和数字）</span></label>
+          <input id="cp-new" type="password" autocomplete="new-password">
+        </div>
+        <button class="btn-main" onclick="changePass()">保存新密码</button>
+        <div class="msg" id="cp-msg"></div>
+        <div class="steps">
+          <b>改密说明</b>
+          改密成功后，该账号在所有设备上的登录态都会失效，需要用新密码重新登录；忘记原密码请让管理员重置。
+        </div>
+      </div>
+
+      <div id="pane-reg" style="display:none">
+        <div class="field">
+          <label>昵称 <span>（必填，2–20 位，登录名）</span></label>
+          <input id="rg-nick" placeholder="例如：深信息-小林">
+        </div>
+        <div class="field">
+          <label>密码 <span>（必填，至少 8 位，含字母和数字）</span></label>
+          <input id="rg-pass" type="password" autocomplete="new-password" placeholder="不要用生日、手机号当密码">
+        </div>
+        <div class="field">
+          <label>学校 <span>（选填）</span></label>
+          <input id="rg-school" placeholder="例如：深圳信息职业技术大学">
+        </div>
+        <div class="field">
+          <label>手机号 <span>（选填，仅管理员可见）</span></label>
+          <input id="rg-phone" placeholder="11 位手机号，可不填">
+        </div>
+        <button class="btn-main" onclick="doRegister()">提交注册申请</button>
+        <div class="msg" id="rg-msg"></div>
+        <div class="status-card" id="rg-status"></div>
+        <div class="steps" id="rg-steps">
+          <b>注册四步说明</b>
+          第 1 步：填昵称和密码（必填），昵称就是登录名；第 2 步：学校和手机号选填，均不影响申请；
+          第 3 步：提交后拿到申请编号，状态“待审核”；第 4 步：管理员通过后用昵称＋密码登录，被驳回会显示理由。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">AI 初判仅供参考，最终以资助部门认定为准｜不替代学校认定与资金发放｜个人信息按最小化原则采集</div>
+</div>
+
+<script>
+const MSG = (id, text, ok) => {
+  const el = document.getElementById(id);
+  el.textContent = text || "";
+  el.className = "msg" + (ok ? " ok" : "");
+};
+
+function switchTab(kind) {
+  document.getElementById("tab-login").classList.toggle("on", kind === "login");
+  document.getElementById("tab-reg").classList.toggle("on", kind === "reg");
+  document.getElementById("tab-pass").classList.toggle("on", kind === "pass");
+  document.getElementById("pane-login").style.display = kind === "login" ? "block" : "none";
+  document.getElementById("pane-reg").style.display = kind === "reg" ? "block" : "none";
+  document.getElementById("pane-pass").style.display = kind === "pass" ? "block" : "none";
+}
+
+async function changePass() {
+  const old_password = document.getElementById("cp-old").value;
+  const new_password = document.getElementById("cp-new").value;
+  if (!old_password || !new_password) { MSG("cp-msg", "请填原密码和新密码"); return; }
+  const res = await fetch("api/auth/change-password", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ old_password, new_password }) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { MSG("cp-msg", typeof data.detail === "string" ? data.detail : "改密失败"); return; }
+  MSG("cp-msg", "已修改，正在返回登录…", true);
+  setTimeout(() => { location.href = "login.html"; }, 900);
+}
+
+async function doLogin() {
+  const nickname = document.getElementById("li-nick").value.trim();
+  const password = document.getElementById("li-pass").value;
+  if (!nickname || !password) { MSG("li-msg", "请先填昵称和密码"); return; }
+  const res = await fetch("api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nickname, password }) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { MSG("li-msg", data.detail || "登录失败"); return; }
+  MSG("li-msg", data.must_change ? "登录成功。当前是管理员重置的临时密码，建议立即修改。" : "登录成功，正在进入…", true);
+  const roleHome = { student: "index.html", counselor: "review.html", admin: "admin.html", auditor: "admin.html" }[data.role] || "index.html";
+  const rolePort = { student: 8000, counselor: 8001, admin: 8002, auditor: 8002 }[data.role];
+  let home = roleHome;
+  if (["8000", "8001", "8002"].includes(location.port) && rolePort && Number(location.port) !== rolePort) {
+    home = `${location.protocol}//${location.hostname}:${rolePort}/${roleHome}`;
+  }
+  setTimeout(() => { location.href = home; }, 600);
+}
+
+async function doRegister() {
+  const payload = {
+    nickname: document.getElementById("rg-nick").value.trim(),
+    password: document.getElementById("rg-pass").value,
+    school: document.getElementById("rg-school").value.trim(),
+    phone: document.getElementById("rg-phone").value.trim()
+  };
+  if (!payload.nickname || !payload.password) { MSG("rg-msg", "昵称和密码为必填"); return; }
+  const res = await fetch("api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { MSG("rg-msg", data.detail || "提交失败"); return; }
+  MSG("rg-msg", "申请已提交，等待管理员审核。", true);
+  const card = document.getElementById("rg-status");
+  card.style.display = "block";
+  card.innerHTML = `申请编号：<code>${data.user_id}</code><br>昵称：<b>${data.nickname}</b><br>
+    当前状态：待审核<br>下一步：管理员通过后，用昵称＋密码在上方“登录”即可，不用重复注册。`;
+  if (data.steps && data.steps.length) {
+    document.getElementById("rg-steps").innerHTML = "<b>提交后会发生什么</b>" + data.steps.join("<br>");
+  }
+}
+
+function openAbout() {
+  const p = document.getElementById("about-panel");
+  p.classList.add("show");
+  p.scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+function closeAbout() {
+  document.getElementById("about-panel").classList.remove("show");
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeAbout(); });
+
+async function whoami() {
+  try {
+    const me = await (await fetch("api/auth/me")).json();
+    if (me.logged_in) {
+      document.getElementById("who").style.display = "flex";
+      document.getElementById("who-text").textContent = `${me.nickname} · ${me.role}`;
+      document.getElementById("tab-pass").style.display = "block";
+    }
+  } catch (e) { /* 未登录不显示 */ }
+}
+
+async function logout() {
+  await fetch("api/auth/logout", { method: "POST" });
+  location.reload();
+}
+
+whoami();
+if (location.hash === "#about") openAbout();
+</script>
+</body>
+</html>

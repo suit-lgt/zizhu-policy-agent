@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "template_version": "1.0",
+  "project_name": "资助政策智能体",
+  "profile": "ai",
+  "feature": "qualification-triage",
+  "created_at_utc": "2026-11-06T13:46:01+00:00",
+  "status": "draft",
+  "files": [
+    "AGENTS.md",
+    "README.md",
+    "docs/verification.md",
+    "CONTEXT.md",
+    "docs/project-brief.md",
+    "docs/design.md",
+    ".scratch/qualification-triage/spec.md",
+    ".scratch/qualification-triage/issues/01-first-slice.md",
+    "docs/ai-contract.md",
+    "docs/data-contract.md"
+  ],
+  "note": "按 ai 档手工复制模板并按项目事实填写；未运行 init_project.py（脚本按设计拒绝已存在的目录）。只证明骨架存在，不证明功能实现、测试通过或业务验收。"
+}

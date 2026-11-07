@@ -1,0 +1,127 @@
+{
+  "version": "v2",
+  "note": "面向高职（专科）学生本人的最小原子条件字段字典。按推荐默认订立（D-009），字段名与取值以本文件为准；改动需同步 docs/data-contract.md 与原子条件文件。v2 增补收入分档与学校档位两个字段（档界待粤教助〔2023〕2号核对）。",
+  "fields": [
+    {
+      "code": "stage",
+      "name": "就读学段",
+      "type": "enum",
+      "values": ["高职专科", "本科", "中职", "普通高中", "学前", "义务教育"],
+      "source": "学生填写",
+      "description": "决定适用哪一学段的资助政策；跨学段条款不得混用"
+    },
+    {
+      "code": "enrollment",
+      "name": "学籍状态",
+      "type": "enum",
+      "values": ["全日制在校", "非全日制", "休学", "已毕业"],
+      "source": "学籍库/学生填写",
+      "description": "多数项目要求全日制在校；已毕业者不再适用在校生条款"
+    },
+    {
+      "code": "normal_program",
+      "name": "是否正常学制内",
+      "type": "bool",
+      "source": "学籍库",
+      "description": "延期毕业、超学制者不属正常学制内"
+    },
+    {
+      "code": "grade",
+      "name": "年级",
+      "type": "int",
+      "source": "学籍库",
+      "description": "部分项目限二年级及以上或仅限一年级新生"
+    },
+    {
+      "code": "income_difficulty",
+      "name": "家庭经济困难认定结果",
+      "type": "enum",
+      "values": ["已认定困难", "待认定", "未认定"],
+      "source": "学校认定结论",
+      "description": "认定口径依粤教助〔2023〕2号；未出认定结论时只能给需核实"
+    },
+    {
+      "code": "income_band",
+      "name": "家庭人均收入区间",
+      "type": "enum",
+      "values": ["低保及特困", "低保边缘（至1.5倍）", "低收入（1.5至2倍）", "2倍以上", "不清楚"],
+      "source": "学生填写（只存区间，不存金额）",
+      "description": "档界以粤教助〔2023〕2号与当地低保标准为准，该文件未入库前只能作参考；用于判断资助档位的大致位置，不单独产生结论"
+    },
+    {
+      "code": "school_tier",
+      "name": "学校助学金档位",
+      "type": "enum",
+      "values": ["一档", "二档", "三档", "未定"],
+      "source": "学校评审/资助中心",
+      "description": "档位数与各档金额由高校在政策区间内自主确定，系统不自动映射；无校级细则时只能给需核实"
+    },
+    {
+      "code": "special_hardship",
+      "name": "困难等级",
+      "type": "enum",
+      "values": ["特别困难", "困难", "一般困难", "未认定"],
+      "source": "学校认定结论",
+      "description": "校内学费减免等按特别困难档执行"
+    },
+    {
+      "code": "veteran",
+      "name": "是否退役士兵学生",
+      "type": "bool",
+      "source": "学生填写+入伍退役证明",
+      "description": "退役士兵学生按单独口径全额享受本专科生国家助学金"
+    },
+    {
+      "code": "orphan",
+      "name": "是否孤儿",
+      "type": "bool",
+      "source": "学生填写+证明",
+      "description": "校内资助减免的特殊身份之一"
+    },
+    {
+      "code": "martyr_child",
+      "name": "是否烈士子女",
+      "type": "bool",
+      "source": "学生填写+证明",
+      "description": "校内资助减免的特殊身份之一"
+    },
+    {
+      "code": "disabled",
+      "name": "是否残疾学生",
+      "type": "bool",
+      "source": "学生填写+残疾证",
+      "description": "校内资助减免的特殊身份之一"
+    },
+    {
+      "code": "hukou_province",
+      "name": "生源省份",
+      "type": "enum",
+      "values": ["广东", "其他省份"],
+      "source": "学生填写",
+      "description": "省级新生资助限广东省生源；国家项目不限"
+    },
+    {
+      "code": "academic",
+      "name": "评审结论",
+      "type": "enum",
+      "values": ["特别优秀", "品学兼优", "一般"],
+      "source": "学校评审结论",
+      "description": "国奖、励志奖学金属评审类，不由学生自填，不能当资格条件自动判等"
+    },
+    {
+      "code": "other_provincial_aid",
+      "name": "是否已获省财政其他专项资助",
+      "type": "bool",
+      "source": "学生填写+资助记录",
+      "description": "新生资助在同一时间段内原则上不重复享受省财政其他专项"
+    },
+    {
+      "code": "standard_amount",
+      "name": "资助标准",
+      "type": "enum",
+      "values": ["2500", "3300", "3700", "5000", "6000", "8000", "10000"],
+      "source": "政策条款",
+      "description": "仅用于展示与核算，不参与资格判等；多份文件冲突时按版本取最新。2500/5000 为广东现行区间下上限"
+    }
+  ]
+}

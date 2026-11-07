@@ -1,0 +1,49 @@
+{
+  "complete": {
+    "name": "样例-信息完整（高职二年级、已认定困难、孤儿、特别困难）",
+    "stage": "高职专科",
+    "enrollment": "全日制在校",
+    "normal_program": true,
+    "grade": 2,
+    "income_difficulty": "已认定困难",
+    "special_hardship": "特别困难",
+    "veteran": false,
+    "orphan": true,
+    "martyr_child": false,
+    "disabled": false,
+    "hukou_province": "广东",
+    "academic": "一般",
+    "other_provincial_aid": false
+  },
+  "missing_income": {
+    "name": "样例-缺困难认定结论",
+    "stage": "高职专科",
+    "enrollment": "全日制在校",
+    "normal_program": true,
+    "grade": 2,
+    "special_hardship": "特别困难",
+    "veteran": false,
+    "orphan": true,
+    "martyr_child": false,
+    "disabled": false,
+    "hukou_province": "广东",
+    "academic": "一般",
+    "other_provincial_aid": false
+  },
+  "no_match": {
+    "name": "样例-全部不满足（已毕业、非正常学制、未认定、一年级、外省）",
+    "stage": "高职专科",
+    "enrollment": "已毕业",
+    "normal_program": false,
+    "grade": 1,
+    "income_difficulty": "未认定",
+    "special_hardship": "未认定",
+    "veteran": false,
+    "orphan": false,
+    "martyr_child": false,
+    "disabled": false,
+    "hukou_province": "其他省份",
+    "academic": "一般",
+    "other_provincial_aid": false
+  }
+}

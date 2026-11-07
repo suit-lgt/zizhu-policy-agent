@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>资助政策智能体 · 审核工作台</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>审核工作台</h1>
+      <div class="sub">待复核任务、结论摘要、通过／退回、批量初筛、两级看板、预警；申诉裁决仅管理员可用</div>
+    </div>
+    <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录教师／审核账号</a></div>
+  </header>
+
+  <nav>
+    <a class="on" href="review.html">审核工作台</a>
+    <a id="nav-admin" href="admin.html" style="display:none">管理后台</a>
+  </nav>
+
+  <div class="disclaimer">复核只改变任务状态与留痕，不改判政策口径；改判须走申诉裁决并记录理由。</div>
+
+  <div class="panel" id="board"></div>
+  <div class="panel" id="warn" style="margin-top:14px"></div>
+  <div class="panel" id="levels" style="margin-top:14px"></div>
+
+  <div class="panel" id="batch-panel" style="margin-top:14px;display:none">
+    <div class="group-title">批量初筛（待复核，最多 100 条一批）</div>
+    <div class="small" id="batch-msg">加载中…</div>
+    <div id="batch"></div>
+    <div class="actions" style="margin-top:10px">
+      <input type="text" id="batch-reason" placeholder="批量退回理由（通过可留空）" style="flex:1;min-width:240px">
+      <button class="primary" onclick="batch('approve')">批量通过</button>
+      <button class="danger" onclick="batch('return')">批量退回</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button data-status="reviewing" class="on">待复核</button>
+    <button data-status="approved">已通过</button>
+    <button data-status="returned">已退回</button>
+    <button data-status="appealed">申诉中</button>
+  </div>
+
+  <section id="tasks"></section>
+
+  <div class="panel" id="appeals-panel" style="margin-top:22px;display:none">
+    <div class="group-title">待处理申诉</div>
+    <div id="appeals" class="small">加载中…</div>
+  </div>
+</div>
+
+<script>
+const H = { "Content-Type": "application/json" };
+const HA = { "Content-Type": "application/json" };
+let STATUS = "reviewing", CAN_HANDLE_APPEAL = false, CAN_REVIEW = false;
+
+function fmt(s) {
+  if (!s) return "";
+  const d = new Date(s);
+  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }).replace(/\//g, "-");
+}
+
+async function loadBoard() {
+  const b = await (await fetch("api/board", { headers: H })).json();
+  const st = Object.entries(b.by_status || {}).map(([k, v]) => `${k} ${v}`).join("　");
+  document.getElementById("board").innerHTML = `
+    <div class="group-title">概览</div>
+    <div class="grid">
+      <div><div class="small">任务总数</div><div style="font-size:22px">${b.tasks}</div></div>
+      <div><div class="small">退回率</div><div style="font-size:22px">${(b.return_rate * 100).toFixed(1)}%</div></div>
+      <div><div class="small">待处理申诉</div><div style="font-size:22px">${b.appeals_open}</div></div>
+      <div><div class="small">结论分布</div><div class="small">${Object.entries(b.conclusions || {}).map(([k, v]) => k + " " + v).join("　")}</div></div>
+    </div>
+    <div class="small" style="margin-top:8px">状态：${st}</div>`;
+}
+
+function taskCard(t) {
+  const chips = (t.summary || []).map(s => `<span class="step">${s.project_name} ${s.conclusion_label || ""}</span>`).join(" ");
+  const actions = t.status === "reviewing" ? (CAN_REVIEW ? `
+    <div class="actions" style="margin-top:10px">
+      <input type="text" id="r-${t.task_id}" placeholder="退回理由（通过可留空）" style="flex:1;min-width:220px">
+      <button class="primary" onclick="decide('${t.task_id}','approve')">通过</button>
+      <button class="danger" onclick="decide('${t.task_id}','return')">退回</button>
+    </div>` : `<div class="small">审计员只读；复核需教师或管理员操作。</div>`) : `<div class="small">状态：${t.status}</div>`;
+  return `<div class="card">
+    <div class="card-top"><div class="proj">${t.task_id}</div><span class="tier">${t.status}</span></div>
+    <div class="meta">提交时间 ${fmt(t.created_at)} · 命中 ${t.hit_count} 项 · 版本 ${t.policy_version}</div>
+    <div class="steps" style="margin-top:8px">${chips}</div>
+    ${actions}</div>`;
+}
+
+async function loadTasks() {
+  const res = await fetch("api/tasks?status=" + STATUS, { headers: H });
+  const data = await res.json();
+  const host = document.getElementById("tasks");
+  host.innerHTML = data.count ? data.items.map(taskCard).join("") :
+    `<div class="panel hint">${STATUS} 下没有任务。</div>`;
+}
+
+async function decide(taskId, action) {
+  const reason = (document.getElementById("r-" + taskId) || {}).value || "";
+  if (action === "return" && !reason.trim()) { alert("退回必须填写理由"); return; }
+  if (!confirm(`确认${action === "approve" ? "通过" : "退回"}任务 ${taskId}？`)) return;
+  const res = await fetch(`api/triage/${taskId}/review`, { method: "POST", headers: H,
+    body: JSON.stringify({ action, reason }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail); return; }
+  await Promise.all([loadTasks(), loadBoard()]);
+}
+
+async function loadWarnings() {
+  const res = await fetch("api/warnings", { headers: H });
+  const data = await res.json();
+  const items = data.items || [];
+  document.getElementById("warn").innerHTML = `
+    <div class="group-title">预警（${items.length}）</div>
+    ${items.length ? items.map(w => `<div class="meta" style="margin:6px 0">
+      <span class="step" style="border-color:${w.level === "warn" ? "#ff4d4f" : "#d9d9d9"}">${w.level === "warn" ? "预警" : "提示"} ${w.count}</span>
+      ${w.title} · ${w.detail}</div>`).join("") : `<div class="small">暂无预警。</div>`}
+    <div class="small" style="margin-top:6px">当前版本：${data.current_version || "无"}　已核文 ${data.docs_verified}/${data.docs_total}</div>`;
+}
+
+async function loadLevels() {
+  const res = await fetch("api/board/levels", { headers: H });
+  const data = await res.json();
+  const p = data.projects || [];
+  document.getElementById("levels").innerHTML = `
+    <div class="group-title">两级看板</div>
+    <div class="small">校级：任务 ${data.school.tasks}　待复核 ${data.school.pending_review}　超时 ${data.school.overdue}　退回率 ${(data.school.return_rate * 100).toFixed(1)}%</div>
+    <table class="small" style="width:100%;margin-top:8px;border-collapse:collapse">
+      <tr><th style="text-align:left">项目</th><th>可申请</th><th>需核实</th><th>暂不适用</th></tr>
+      ${p.map(x => `<tr><td style="text-align:left">${x.project_id} ${x.project_name}</td>
+        <td style="text-align:center">${x.eligible}</td><td style="text-align:center">${x.need_check}</td>
+        <td style="text-align:center">${x.not_applicable}</td></tr>`).join("")}
+    </table>`;
+}
+
+async function loadBatch() {
+  const res = await fetch("api/review/queue?status=reviewing&limit=50", { headers: H });
+  const data = await res.json();
+  const host = document.getElementById("batch");
+  document.getElementById("batch-msg").textContent = data.count
+    ? `待复核 ${data.count} 条；勾选后可批量处理。超时（${data.overdue_hours}h 以上）已标红。`
+    : "暂无待复核任务。";
+  host.innerHTML = (data.items || []).map(t => `
+    <label class="meta" style="display:flex;gap:8px;align-items:center;margin:6px 0;${t.overdue ? "color:#ff4d4f" : ""}">
+      <input type="checkbox" class="pick" value="${t.task_id}">
+      <span style="font-family:monospace">${t.task_id}</span>
+      <span>等待 ${t.wait_hours}h${t.overdue ? "（超时）" : ""}</span>
+      <span>命中 ${t.hit_count}</span>
+      ${t.review_required ? `<span class="step need_check">含需评审</span>` : ""}
+      ${t.missing_fields.length ? `<span class="step">缺 ${t.missing_fields.join("、")}</span>` : ""}
+    </label>`).join("");
+}
+
+async function batch(action) {
+  const ids = [...document.querySelectorAll("#batch .pick:checked")].map(x => x.value);
+  if (!ids.length) { alert("先勾选任务"); return; }
+  const reason = document.getElementById("batch-reason").value.trim();
+  if (action === "return" && !reason) { alert("批量退回须填写理由"); return; }
+  if (!confirm(`确认批量${action === "approve" ? "通过" : "退回"} ${ids.length} 条任务？`)) return;
+  const res = await fetch("api/review/batch", { method: "POST", headers: H,
+    body: JSON.stringify({ task_ids: ids, action, reason }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail); return; }
+  alert(`成功 ${data.count_ok} 条，跳过 ${data.count_skipped} 条`);
+  await Promise.all([loadBatch(), loadTasks(), loadBoard(), loadWarnings()]);
+}
+
+async function loadAppeals() {
+  const res = await fetch("api/appeals?status=open", { headers: HA });
+  const data = await res.json();
+  const host = document.getElementById("appeals");
+  if (!data.count) { host.textContent = "暂无待处理申诉。"; return; }
+  host.innerHTML = data.items.map(a => `
+    <div class="card" style="margin-top:10px">
+      <div class="card-top"><div class="proj">${a.task_id}</div><span class="tier need_check">待裁决</span></div>
+      <div class="meta">项目 ${a.project_id || "全部"} · ${fmt(a.created_at)} · 理由：${a.reason}</div>
+      ${CAN_HANDLE_APPEAL ? `<div class="actions" style="margin-top:8px">
+        <select id="dec-${a.id}" style="max-width:150px">
+          <option value="uphold">维持原结论</option><option value="amend">改判</option>
+        </select>
+        <select id="new-${a.id}" style="max-width:150px">
+          <option value="可申请">可申请</option><option value="需核实">需核实</option><option value="暂不适用">暂不适用</option>
+        </select>
+        <input type="text" id="ar-${a.id}" placeholder="裁决理由（必填）" style="flex:1;min-width:200px">
+        <button class="primary" onclick="handleAppeal(${a.id})">提交裁决</button>
+      </div>` : `<div class="small" style="margin-top:8px">审计员只读；改判需管理员操作。</div>`}
+    </div>`).join("");
+}
+
+async function handleAppeal(id) {
+  const decision = document.getElementById("dec-" + id).value;
+  const newConclusion = document.getElementById("new-" + id).value;
+  const reason = document.getElementById("ar-" + id).value.trim();
+  if (!reason) { alert("裁决须填写理由"); return; }
+  if (!confirm(`确认${decision === "amend" ? "改判" : "维持原结论"}？提交后不可删除。`)) return;
+  const res = await fetch(`api/appeal/${id}/handle`, { method: "POST", headers: HA,
+    body: JSON.stringify({ decision, reason, new_conclusion: decision === "amend" ? newConclusion : null }) });
+  const data = await res.json();
+  if (!res.ok) { alert(data.detail); return; }
+  await Promise.all([loadAppeals(), loadTasks(), loadBoard()]);
+}
+
+document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.remove("on"));
+  b.classList.add("on");
+  STATUS = b.dataset.status;
+  loadTasks();
+}));
+
+loadBoard(); loadTasks(); loadWarnings(); loadLevels(); loadBatch();
+</script>
+<script>
+(async function () {
+  try {
+    const me = await (await fetch("api/auth/me")).json();
+    if (!me.logged_in || !["counselor", "admin", "auditor"].includes(me.role)) {
+      location.href = "login.html";
+      return;
+    }
+    if (["admin", "auditor"].includes(me.role)) {
+      CAN_HANDLE_APPEAL = me.role === "admin";
+      const navAdmin = document.getElementById("nav-admin");
+      const appealPanel = document.getElementById("appeals-panel");
+      if (navAdmin) navAdmin.style.display = "";
+      if (appealPanel) appealPanel.style.display = "";
+      loadAppeals();
+    }
+    CAN_REVIEW = ["counselor", "admin"].includes(me.role);
+    const batchPanel = document.getElementById("batch-panel");
+    if (batchPanel) batchPanel.style.display = CAN_REVIEW ? "" : "none";
+    loadTasks();
+    if (CAN_REVIEW) loadBatch();
+    const b = document.getElementById("me-badge");
+    if (!b) return;
+    b.innerHTML = `已登录：${me.nickname}（${me.role}）` +
+      (me.must_change ? ` · <b style="color:#b45309">临时密码，请尽快改密</b>` : "") +
+      ` · <a href="#" onclick="fetch('api/auth/logout',{method:'POST'}).then(()=>location.reload());return false">退出</a>`;
+  } catch (e) { /* 未登录保持演示态 */ }
+})();
+</script>
+</body>
+</html>
