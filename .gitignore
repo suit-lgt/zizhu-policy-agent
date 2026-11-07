@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# 环境与本地配置
+.env
+.env.*
+!.env.example
+
+# 运行数据与个人/业务数据：不入库
+data/app.db
+data/staging/policies.db
+data/uploads/
+data/staging/raw/
+logs/
+backups/
+*.log
+*.err
+*.out
+
+# 演示截图体积较大，按需单独归档
+docs/demo/
+
+# 临时文件
+*.tmp
+*.tar
+*.tar.gz
+*.zip
