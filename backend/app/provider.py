@@ -155,6 +155,73 @@ def compose(question: str, hits: list[dict]) -> dict:
             "fallback": True, "error": _last["error"]}
 
 
+# Consultation protocol deliberately restricts the model to evidence selection.
+# Free-form paraphrases cannot be proven by checking document numbers alone.
+WORKBENCH_PROMPT_VERSION = 'qa_workbench_v2'
+
+def validate_workbench(payload, bundle):
+    if not isinstance(payload,dict) or set(payload)!={'evidence_ids'}: return False,'unsupported_claim'
+    ids=payload['evidence_ids']; allowed={h['evidence_id'] for h in bundle['policy_items']}
+    if not isinstance(ids,list) or not ids or len(ids)>5 or any(not isinstance(x,str) or x not in allowed for x in ids):
+        return False,'invalid_reference'
+    if len(ids)!=len(set(ids)): return False,'duplicate_reference'
+    return True,'ok'
+
+def _call_workbench(bundle):
+    prompt=(ROOT/'prompts/qa_workbench_v2.md').read_text(encoding='utf-8')
+    minimal={'intent':bundle['context']['intent'],'question':bundle['context']['sanitized_question'],
+             'evidence':[{'id':h['evidence_id'],'text':h['quote']} for h in bundle['policy_items']]}
+    payload={'model':model_name(),'temperature':0,'max_tokens':250,'messages':[
+        {'role':'system','content':prompt},{'role':'user','content':json.dumps(minimal,ensure_ascii=False)}]}
+    req=urllib.request.Request(base_url()+'/chat/completions',data=json.dumps(payload).encode(),
+        headers={'Content-Type':'application/json','Authorization':f"Bearer {os.environ.get('FUND_LLM_KEY','')}"},method='POST')
+    timeout=max(1,min(float(os.environ.get('FUND_LLM_TIMEOUT','20')),25))
+    with urllib.request.urlopen(req,timeout=timeout) as response:
+        data=json.loads(response.read(1000000).decode())
+    text=data['choices'][0]['message']['content'].strip()
+    text=re.sub(r'^```(?:json)?|```$','',text,flags=re.M).strip()
+    return json.loads(text)
+
+def compose_workbench(bundle):
+    from .qa_context import PROJECTS
+    ctx=bundle['context']; items=bundle['policy_items']
+    selected=[x['evidence_id'] for x in items[:3]]
+    requested=mode(); actual='mock' if requested=='mock' else 'offline'; failure=None
+    if requested=='online' and items:
+        if not configured(): failure='missing_configuration'
+        else:
+            for _ in range(2):
+                try:
+                    payload=_call_workbench(bundle)
+                    if validate_workbench(payload,bundle)[0]:
+                        selected=payload['evidence_ids'];actual='online';failure=None;break
+                    failure='validation_failed'
+                except Exception: failure='provider_unavailable'
+    topic='、'.join(PROJECTS[c] for c in ctx['project_codes']) or '该项目'
+    if ctx.get('branch')=='clarify':
+        text='请选择要咨询的资助项目，我会沿用这一项目回答后续问题。' if ctx['intent']!='review_progress' else '请先选择一条本人的初判任务，再查看当时的结果与依据。'
+        state='clarified'
+    elif ctx.get('branch')=='refused' or not items:
+        text='当前发布版本没有找到足以回答此问题的政策依据。请确认咨询项目，或联系学校资助中心核实。'
+        state='refused'
+    else:
+        state='completed'
+        messages={
+            'policy_scope':f'关于{topic}，已整理本版的申请对象与条件原文。请先核对条款，再在初判表单确认本人学籍与认定信息；聊天不会直接判定个人资格。',
+            'benefit_standard':f'关于{topic}，请按右侧原文区分资助标准、适用条件和学校具体档位。政策中的平均值或区间不能直接作为个人实际领取金额；学校档位与叠加规则缺少依据时仍需核实。',
+            'materials':f'已整理{topic}的办理准备清单。清单逐项标明来源：有原文支持的政策材料可以核对引用，其余通用配置需要学校确认。请勿在聊天中上传证件或账户信息。',
+            'process':f'{topic}可按右侧步骤准备：先核对信息，再确认学校要求，已有任务可进入办理进度。学校办理时限与入口未核实前，系统不会替你推定或提交申请。',
+            'review_progress':'已调取本人任务快照。右侧显示当时的程序结果、待补信息及当前任务状态；重新初判与提交复核仍需你确认。'}
+        text=messages[ctx['intent']]
+        if ctx['intent']=='materials' and not bundle['materials']: text='当前没有可核对的本校材料清单。已有政策依据可在右侧查看；具体材料请向学校资助中心确认。'
+    # Citations, numbers, status and full quotes only come from the evidence, never model prose.
+    citations=[{'evidence_id':h['evidence_id'],'version_id':h['version_id'],'clause_id':h['clause_id'],
+                'doc_no':h['doc_no'],'article_no':h['article_no'],'span':[h['char_start'],h['char_end']]}
+               for h in items if h['evidence_id'] in selected]
+    return {'text':text,'citations':citations,'state':state,'mode':actual,'fallback_reason_code':failure,
+            'prompt_version':WORKBENCH_PROMPT_VERSION}
+
+
 def _selftest() -> int:
     hits = [{"clause_id": 351, "article_no": "第十一条", "quote": "国家助学金平均资助标准为每生每年3700元。",
              "policy_title": "广东省学生资助资金管理实施办法", "doc_no": "粤财规〔2026〕1号"}]

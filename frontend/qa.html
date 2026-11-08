@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>政策问答 · 资助政策智能体</title>
+<link rel="stylesheet" href="static/style.css">
+<link rel="stylesheet" href="static/qa-workbench.css">
+<link rel="stylesheet" href="static/qa-workbench-polish.css">
+</head>
+<body class="student-app consult-page">
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit">
+      <div class="logo-mark"><img src="static/assets/icon-policy-assistant.svg" alt="" width="40" height="40"></div>
+      <div>
+        <div class="brand-title">资助政策智能体</div>
+        <div class="brand-sub">ZIZHU POLICY AGENT</div>
+      </div>
+    </a>
+    <nav class="top-nav">
+      <a href="index.html">学生端</a>
+      <a href="triage.html">AI 初判</a>
+      <a class="on" href="qa.html">政策问答</a>
+      <a href="progress.html">办理进度</a>
+    </nav>
+    <div class="top-actions">
+      <span class="env-pill" id="mode-pill">政策咨询</span>
+      <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录或注册</a></div>
+    </div>
+  </header>
+
+  <div class="consult-heading">
+    <div><div class="eyebrow">POLICY CONSULTATION</div><h1>把政策问清楚，把下一步理明白</h1><p>连续咨询 · 原文可查 · 办理有序</p></div>
+    <a class="btn-ghost" href="progress.html">我的办理进度 ↗</a>
+  </div>
+  <main class="consult-grid">
+    <aside class="panel consult-history" aria-label="本人咨询记录">
+      <div class="panel-head"><h2>我的咨询</h2><button id="new-session" class="primary" aria-label="新建咨询">＋ 新咨询</button></div>
+      <details class="history-fold" open><summary>查看咨询记录</summary><div id="history" class="history-list">正在加载…</div></details>
+      <div class="history-foot">记录仅本人可见。个人情况请在初判表单填写。</div>
+    </aside>
+    <section class="panel consult-dialogue" aria-label="政策对话">
+      <div class="dialogue-header"><div><div class="eyebrow">向政策库提问</div><h2 id="session-title">开始一次政策咨询</h2></div><div class="dialogue-tools"><button class="ghost" id="export-all" disabled>导出记录</button><button class="ghost" id="delete-session" disabled>删除</button></div></div>
+      <div id="version-notice" class="version-notice" hidden></div>
+      <div id="qa" class="conversation" aria-live="polite">
+        <div class="consult-welcome">
+          <div class="consult-welcome-hero"><div class="consult-welcome-copy"><span class="welcome-kicker">问政策 · 查原文 · 找下一步</span><h2>你想先了解哪一项？</h2><p>从具体资助项目开始，再继续追问条件、材料或办理方式。</p></div><img class="welcome-art" src="static/assets/qa-welcome-book.svg" alt="" width="116" height="104"></div>
+          <div class="starter-heading"><b>从常见问题开始</b><span>选择后可编辑，再手动发送</span></div>
+          <div class="starter-grid">
+            <button data-question="国家助学金的申请条件是什么"><img src="static/assets/qa-topic-eligibility.svg" alt="" width="40" height="40"><span class="starter-copy"><b>申请条件</b><span>国家助学金面向哪些学生？</span></span><span class="starter-arrow" aria-hidden="true">↗</span></button>
+            <button data-question="国家励志奖学金资助标准是多少"><img src="static/assets/qa-topic-standard.svg" alt="" width="40" height="40"><span class="starter-copy"><b>资助标准</b><span>查看金额条件与政策原文</span></span><span class="starter-arrow" aria-hidden="true">↗</span></button>
+            <button data-question="国家助学金要准备什么材料"><img src="static/assets/qa-topic-materials.svg" alt="" width="40" height="40"><span class="starter-copy"><b>准备材料</b><span>区分政策规定与学校要求</span></span><span class="starter-arrow" aria-hidden="true">↗</span></button>
+            <button data-question="国家助学金怎么办理"><img src="static/assets/qa-topic-process.svg" alt="" width="40" height="40"><span class="starter-copy"><b>办理步骤</b><span>了解申请入口与办理顺序</span></span><span class="starter-arrow" aria-hidden="true">↗</span></button>
+          </div>
+        </div>
+      </div>
+      <form id="ask-form" class="consult-composer"><label class="sr-only" for="q">咨询问题</label><textarea id="q" rows="2" maxlength="1200" placeholder="输入政策问题；无需提供姓名、证件号码或家庭收入明细"></textarea><div class="composer-bottom"><span id="composer-status">Enter 发送 · Shift + Enter 换行</span><div><button type="button" class="ghost" id="cancel-turn" hidden>停止</button><button class="primary" id="ask" type="submit">发送问题 ↑</button></div></div></form>
+      <div class="consult-disclaimer">政策问答用于理解与办事参考；个人资助资格以资助部门最终认定为准。</div>
+    </section>
+    <aside class="panel consult-evidence" aria-label="本轮办理依据"><details id="evidence-fold" open><summary><span><small>与所选回答同步</small><b>本轮办理依据</b></span><span class="fold-mark" aria-hidden="true">⌄</span></summary><div id="evidence-panel"><div class="evidence-empty"><img src="static/assets/qa-evidence-empty.svg" alt="" width="72" height="72"><h3>本轮依据将在这里展开</h3><p>发送问题后，这里会显示政策版本、引用原文和可核实的办理信息。</p><ul><li>适用范围与政策版本</li><li>条款来源与原文位置</li><li>待确认事项与下一步</li></ul></div></div></details></aside>
+  </main>
+</div>
+<dialog id="clause-dialog" class="clause-dialog"><div class="panel-head"><h2 id="m-title">条款原文</h2><button class="ghost" id="close-clause" aria-label="关闭原文">关闭 ×</button></div><p id="m-doc" class="hint"></p><div id="m-quote" class="clause-text"></div><p id="m-flag" class="hint"></p><a id="m-link" class="btn-ghost" target="_blank" rel="noopener noreferrer">打开官方来源 ↗</a></dialog>
+<div id="toast" class="consult-toast" role="status" hidden></div>
+<script src="static/qa-workbench.js" defer></script>
+</body></html>

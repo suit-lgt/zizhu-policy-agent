@@ -5,76 +5,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>资助政策智能体 · 登录与注册</title>
 <link rel="stylesheet" href="static/style.css">
-<style>
-  body{background:#f5f7fb}
-  .auth-wrap{max-width:760px;margin:0 auto;padding:36px 20px 60px}
-  .brand{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0f766e,#14b8a6);
-        color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
-  .brand h1{font-size:22px;margin:0}
-  .brand .sub{font-size:13px;color:#64748b;margin-top:2px}
-  .intro-line{max-width:640px;margin:18px auto 0;text-align:center;font-size:13px;color:#64748b;line-height:1.8}
-  .intro-line a{color:#0f766e;text-decoration:none;border-bottom:1px dashed #0f766e;white-space:nowrap}
-  .intro-line a:hover{color:#115e59}
-  .auth-main{max-width:520px;margin:16px auto 0}
-  .card{background:#fff;border:1px solid #e6ebf2;border-radius:14px;padding:22px;
-        box-shadow:0 8px 24px rgba(15,23,42,.06)}
-  .about-panel{display:none;max-width:640px;margin:14px auto 0;background:#fff;border:1px solid #e6ebf2;
-               border-radius:14px;padding:20px 24px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
-  .about-panel.show{display:block}
-  .about-panel h2{font-size:16px;margin:0 0 6px}
-  .about-panel .lead{font-size:13px;color:#64748b;margin-bottom:10px;line-height:1.7}
-  .about-panel .close{float:right;border:0;background:transparent;font-size:20px;color:#94a3b8;cursor:pointer;line-height:1}
-  .points{list-style:none;padding:0;margin:10px 0 0}
-  .points li{display:flex;gap:10px;font-size:13px;color:#334155;line-height:1.65;margin-bottom:12px}
-  .points b{color:#0f766e}
-  .dot{flex:none;width:22px;height:22px;border-radius:50%;background:#e6f7f4;color:#0f766e;
-       display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
-  .tabs2{display:flex;gap:8px;margin-bottom:16px}
-  .tabs2 button{flex:1;padding:10px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;
-                font-size:14px;cursor:pointer;color:#475569}
-  .tabs2 button.on{background:#0f766e;border-color:#0f766e;color:#fff;font-weight:600}
-  .field{margin-bottom:12px}
-  .field label{display:block;font-size:13px;color:#334155;margin-bottom:6px}
-  .field label span{color:#94a3b8;font-weight:400}
-  .field input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #dbe3ec;
-               border-radius:9px;font-size:14px;background:#fff}
-  .field input:focus{outline:none;border-color:#14b8a6;box-shadow:0 0 0 3px rgba(20,184,166,.12)}
-  .hintline{font-size:12px;color:#94a3b8;margin-top:4px;line-height:1.6}
-  .btn-main{width:100%;padding:11px;border:0;border-radius:9px;background:#0f766e;color:#fff;
-            font-size:15px;font-weight:600;cursor:pointer}
-  .btn-main:hover{background:#115e59}
-  .btn-ghost{padding:8px 12px;border:1px solid #dbe3ec;border-radius:8px;background:#fff;cursor:pointer;font-size:13px}
-  .msg{min-height:20px;font-size:13px;margin-top:10px;color:#b45309;line-height:1.65}
-  .msg.ok{color:#0f766e}
-  .steps{background:#f0fdfa;border:1px solid #ccfbf1;border-radius:10px;padding:12px 14px;margin-top:12px;
-         font-size:13px;color:#134e4a;line-height:1.8}
-  .steps b{display:block;margin-bottom:4px}
-  .status-card{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:14px;margin-top:12px;
-               font-size:13px;color:#334155;line-height:1.8;display:none}
-  .status-card code{background:#e2e8f0;padding:1px 6px;border-radius:5px}
-  .foot{font-size:12px;color:#94a3b8;text-align:center;margin-top:26px;line-height:1.8}
-  .topbar{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#64748b}
-  .who{display:none;align-items:center;gap:10px}
-</style>
 </head>
-<body>
+<body class="auth-page">
 <div class="auth-wrap">
-  <div class="topbar">
+  <div class="auth-topline">
     <div class="brand">
-      <div class="logo">助</div>
+      <div class="logo-mark"><img src="static/assets/icon-policy-assistant.svg" alt="" width="40" height="40"></div>
       <div>
-        <h1>资助政策智能体</h1>
+        <h1 class="brand-title">资助政策智能体</h1>
         <div class="sub">国家 · 广东省 · 校级三级政策口径｜每条结论可回点原文</div>
       </div>
     </div>
     <div class="who" id="who">
       <span id="who-text"></span>
+      <a class="btn-ghost" id="who-home" href="index.html">进入工作台</a>
       <button class="btn-ghost" onclick="logout()">退出登录</button>
     </div>
   </div>
 
-  <div class="intro-line">
+  <div class="auth-intro-line">
     面向学生、家长与高校老师：政策经人工核文、依据可回点原文、版本可回滚。
     <a href="#" onclick="openAbout();return false;">了解系统定位与四条创新点</a>
   </div>
@@ -253,8 +202,11 @@ async function whoami() {
   try {
     const me = await (await fetch("api/auth/me")).json();
     if (me.logged_in) {
+      const roleText = { student: "学生", counselor: "教师", admin: "管理员", auditor: "审计员" };
       document.getElementById("who").style.display = "flex";
-      document.getElementById("who-text").textContent = `${me.nickname} · ${me.role}`;
+      document.getElementById("who-text").textContent = `${me.nickname} · ${roleText[me.role] || me.role}`;
+      const home = { student: "index.html", counselor: "review.html", admin: "admin.html", auditor: "admin.html" };
+      document.getElementById("who-home").href = home[me.role] || "index.html";
       document.getElementById("tab-pass").style.display = "block";
     }
   } catch (e) { /* 未登录不显示 */ }

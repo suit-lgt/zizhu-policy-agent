@@ -6,335 +6,203 @@
 <title>资助政策智能体 · 学生端</title>
 <link rel="stylesheet" href="static/style.css">
 </head>
-<body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>资助政策智能体 · 学生端</h1>
-      <div class="sub">勾选你的学籍与家庭情况，得到可申请项目、依据条款与材料清单</div>
+<body class="student-app">
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit">
+      <div class="logo-mark"><img src="static/assets/icon-policy-assistant.svg" alt="" width="40" height="40"></div>
+      <div>
+        <div class="brand-title">资助政策智能体</div>
+        <div class="brand-sub">ZIZHU POLICY AGENT</div>
+      </div>
+    </a>
+    <nav class="top-nav">
+      <a class="on" href="index.html">学生端</a>
+      <a href="triage.html">AI 初判</a>
+      <a href="qa.html">政策问答</a>
+      <a href="progress.html">办理进度</a>
+    </nav>
+    <div class="top-actions">
+      <span class="env-pill"><span class="pulse" id="provider-pulse"></span><span id="provider-mode">正在读取政策服务</span></span>
+      <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录或注册</a></div>
     </div>
-    <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录或注册</a></div>
   </header>
 
-  <nav>
-    <a class="on" href="index.html">学生端</a>
-  </nav>
+  <div class="page-grid">
+    <aside class="sidebar">
+      <section class="home-profile" aria-label="学生工作台欢迎区">
+        <div class="home-profile-art"><img src="static/assets/mascot-xiaonuan.svg" alt="小暖，资助政策向导" width="72" height="84"></div>
+        <div class="home-profile-copy"><span>你的资助政策向导</span><strong><span id="student-nickname">同学</span>，你好</strong><small>今天想先了解什么？</small></div>
+      </section>
 
-  <div class="disclaimer">
-    AI 初判仅供参考，最终以资助部门认定为准。系统只出“可申请／需核实／暂不适用”，不作符合性认定，也不代替政务系统。
-  </div>
+      <section class="home-widget home-todos" aria-labelledby="todo-title">
+        <div class="home-widget-head"><h2 id="todo-title"><span class="widget-mark" aria-hidden="true">▦</span>最近办理</h2><a href="progress.html">全部</a></div>
+        <div class="home-task-summary" id="task-summary">正在读取本人记录…</div>
+        <div id="todo-list" class="home-todo-list" aria-live="polite"><div class="home-todo-empty">请稍候</div></div>
+      </section>
 
-  <div class="panel">
-    <form id="form">
-      <div id="groups"></div>
-      <label class="consent">
-        <input type="checkbox" id="consent">
-        <span>我已阅读：系统只采集判定所需的学籍与家庭情况字段，用于当次初判；不保存姓名，不用于其他用途，可随时撤回并删除本次任务。</span>
-      </label>
-      <div class="actions">
-        <button type="submit" class="primary" id="submit">生成初判</button>
-        <button type="button" class="ghost" id="reset">清空</button>
-        <button type="button" class="ghost" id="demo">载入示例</button>
-        <span class="hint">可只填一部分，未填项会标为“需核实”，不会替你猜。</span>
+      <section class="home-widget home-policy-levels" aria-labelledby="policy-level-title">
+        <div class="home-widget-head"><h2 id="policy-level-title"><span class="widget-mark" aria-hidden="true">▦</span>政策覆盖</h2></div>
+        <div class="policy-levels" aria-label="国家、广东省、校级政策">
+          <span class="level-national"><img src="static/assets/icon-policy-national.svg" alt=""><b>国家</b></span>
+          <span class="level-province"><img src="static/assets/icon-policy-province.svg" alt=""><b>广东省</b></span>
+          <span class="level-campus"><img src="static/assets/icon-policy-campus.svg" alt=""><b>校级</b></span>
+        </div>
+        <div class="side-meta" id="policy-meta">只检索已核文并发布的条款</div>
+      </section>
+    </aside>
+
+    <main class="main home-main">
+      <section class="home-assistant" aria-labelledby="assistant-title">
+        <div class="home-assistant-top"><span class="home-live"><i></i>政策咨询工作台</span><a href="qa.html">查看咨询记录 <span aria-hidden="true">↗</span></a></div>
+        <div class="home-assistant-body">
+          <div class="home-assistant-kicker">资助政策 · 有依据地回答</div>
+          <h1 id="assistant-title">你好，我是小暖</h1>
+          <p>查申请条件、准备材料，或把办理步骤问清楚。</p>
+          <form id="home-ask-form" class="home-ask-form">
+            <label class="home-question-label" for="home-question">政策问题</label>
+            <textarea id="home-question" rows="3" maxlength="1200" placeholder="例如：国家助学金需要准备什么材料？"></textarea>
+            <div class="home-ask-bottom"><span>无需填写姓名、证件号码或家庭收入明细</span><button class="primary" type="submit">开始咨询 <span aria-hidden="true">↗</span></button></div>
+          </form>
+          <div id="home-ask-feedback" class="home-ask-feedback" role="status" aria-live="polite"></div>
+          <div class="home-prompt-list" aria-label="常见问题">
+            <button type="button" data-home-prompt="国家助学金的申请条件是什么">申请条件</button>
+            <button type="button" data-home-prompt="国家助学金要准备什么材料">准备材料</button>
+            <button type="button" data-home-prompt="国家助学金怎么办理">办理步骤</button>
+          </div>
+        </div>
+        <div class="home-assistant-foot"><span>回答引用已发布政策条款</span><span>个人资格请进入 AI 初判</span></div>
+      </section>
+
+      <div class="home-lower-grid">
+        <section class="home-widget home-shortcuts" aria-labelledby="shortcut-title">
+          <div class="home-widget-head"><h2 id="shortcut-title"><span class="widget-mark" aria-hidden="true">▦</span>常用功能</h2></div>
+          <div class="home-shortcut-grid">
+            <a class="home-shortcut" href="triage.html"><span class="shortcut-icon shortcut-blue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5zM4 7.5l8 4.7 8-4.7M12 12.2V21"/></svg></span><span><b>AI 初判</b><small>核对可能匹配的项目</small></span><i aria-hidden="true">↗</i></a>
+            <a class="home-shortcut" href="qa.html"><span class="shortcut-icon shortcut-teal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 5.5h14v10H11l-5 4v-4H5zM8 9h8m-8 3h5"/></svg></span><span><b>政策问答</b><small>查看条款与办理依据</small></span><i aria-hidden="true">↗</i></a>
+            <a class="home-shortcut" href="progress.html"><span class="shortcut-icon shortcut-orange" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8m-8 4h8m-8 4h5"/></svg></span><span><b>办理进度</b><small>继续查看本人记录</small></span><i aria-hidden="true">↗</i></a>
+          </div>
+        </section>
+        <section class="home-widget home-policy-status" aria-labelledby="policy-status-title">
+          <div class="home-widget-head"><h2 id="policy-status-title"><span class="widget-mark" aria-hidden="true">▦</span>政策库状态</h2></div>
+          <div class="home-policy-number" id="policy-number">—<small> / — 份已核文</small></div>
+          <div class="home-policy-caption" id="policy-status-copy">只检索已核文并发布的政策条款</div>
+          <a href="qa.html">查看政策依据 <span aria-hidden="true">↗</span></a>
+        </section>
       </div>
-    </form>
-  </div>
-
-  <div class="panel">
-    <div class="group-title">政策问答（答案只引用条款，检索不到就拒答）</div>
-    <div class="actions">
-      <input type="text" id="q" placeholder="例如：国家助学金的申请条件、励志奖学金多少元" style="flex:1;min-width:240px">
-      <button class="primary" id="ask">提问</button>
-    </div>
-    <div id="qa" class="sec"></div>
-  </div>
-
-  <section class="results" id="results"></section>
-</div>
-
-<div id="mask" class="modal-mask">
-  <div class="modal">
-    <h3 id="m-title">条款原文</h3>
-    <div class="doc" id="m-doc"></div>
-    <div class="quote" id="m-quote"></div>
-    <div class="flag" id="m-flag"></div>
-    <div class="foot">
-      <a id="m-link" class="ghost" href="#" target="_blank" rel="noopener">打开官方页面</a>
-      <button class="ghost" onclick="closeModal()">关闭</button>
-    </div>
+      <p class="home-disclaimer">AI 初判仅供参考，最终以资助部门认定为准。</p>
+    </main>
   </div>
 </div>
 
 <script>
-const GROUPS = [
-  { title: "学籍情况", codes: ["stage", "enrollment", "normal_program", "grade"] },
-  { title: "家庭经济情况", codes: ["income_difficulty", "income_band", "special_hardship"] },
-  { title: "特殊身份", codes: ["veteran", "orphan", "martyr_child", "disabled"] },
-  { title: "其他情况", codes: ["hukou_province", "other_provincial_aid", "school_tier"] },
-  { title: "评审类（只作参考，不参与判等）", codes: ["academic"] }
-];
-const H = { "Content-Type": "application/json" };
-let FIELDS = {}, MATS = {}, STATE = {};
+const STATUS_TEXT = {
+  triaged: "已初判", reviewing: "复核中", approved: "已通过",
+  returned: "已退回", appealed: "申诉中", amended: "已改判"
+};
+const ROLE_TEXT = { student: "学生", counselor: "教师", admin: "管理员", auditor: "审计员" };
 
 function fmt(s) {
-  if (!s) return "";
+  if (!s) return "—";
   const d = new Date(s);
-  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }).replace(/\//g, "-");
+  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).replace(/\//g, "-");
 }
 
-function ctrl(f) {
-  const id = "f_" + f.code;
-  let html = `<label for="${id}">${f.name}</label>`;
-  if (f.type === "bool") {
-    html += `<select id="${id}" data-code="${f.code}"><option value="">未填</option><option value="true">是</option><option value="false">否</option></select>`;
-  } else if (f.type === "enum") {
-    const opts = (f.values || []).map(v => `<option value="${v}">${v}</option>`).join("");
-    html += `<select id="${id}" data-code="${f.code}"><option value="">未填</option>${opts}</select>`;
-  } else {
-    html += `<input id="${id}" data-code="${f.code}" type="number" min="1" max="8" placeholder="未填">`;
-  }
-  return `<div>${html}<div class="hint" style="margin-top:4px">${f.description || ""}</div></div>`;
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[c]);
 }
 
-async function boot() {
-  const res = await fetch("api/fields", { headers: H });
-  const payload = await res.json();
-  FIELDS = Object.fromEntries(payload.fields.map(f => [f.code, f]));
-  document.getElementById("groups").innerHTML = GROUPS.map(g => {
-    const fields = g.codes.filter(c => FIELDS[c]).map(c => ctrl(FIELDS[c])).join("");
-    return `<div class="group-title">${g.title}</div><div class="grid">${fields}</div>`;
-  }).join("");
-  const m = await (await fetch("api/materials", { headers: H })).json();
-  m.items.forEach(x => { MATS[x.project_id] = MATS[x.project_id] || {}; MATS[x.project_id][x.name] = x.source_type; });
+function statusBadge(st) {
+  const cls = st === "approved" ? "eligible" : st === "returned" ? "not_applicable" : st === "reviewing" || st === "appealed" ? "need_check" : "";
+  return `<span class="tier ${cls}">${STATUS_TEXT[st] || st}</span>`;
 }
 
-function collect() {
-  const out = {};
-  document.querySelectorAll("[data-code]").forEach(el => {
-    const v = el.value.trim();
-    if (v === "") return;
-    const code = el.dataset.code;
-    if (FIELDS[code] && FIELDS[code].type === "int") out[code] = Number(v);
-    else if (FIELDS[code] && FIELDS[code].type === "bool") out[code] = (v === "true");
-    else out[code] = v;
-  });
-  return out;
+function taskRow(t) {
+  const summary = (t.summary || []).slice(0, 2).map(x => esc(x.project_name || x.conclusion_label)).join("、") || "暂无匹配项目";
+  const status = STATUS_TEXT[t.status] || "状态待确认";
+  return `<a class="home-todo-item" href="progress.html?task=${encodeURIComponent(t.task_id)}">
+    <span class="home-todo-meta"><b>${esc(status)}</b><time>${fmt(t.created_at)}</time></span>
+    <strong>${summary}</strong>
+    <small>查看办理详情 <span aria-hidden="true">↗</span></small>
+  </a>`;
 }
 
-function fill(sample) {
-  document.querySelectorAll("[data-code]").forEach(el => {
-    const code = el.dataset.code;
-    if (!(code in sample)) { el.value = ""; return; }
-    const v = sample[code];
-    el.value = (v === true ? "true" : v === false ? "false" : String(v));
-  });
-}
-
-async function loadSample(name) {
-  const all = await (await fetch("api/samples", { headers: H })).json();
-  if (!all[name]) return false;
-  fill(all[name]);
-  return true;
-}
-
-function tierClass(c) { return c || "not_applicable"; }
-
-function card(item) {
-  if (!item.conclusion) {
-    return `<div class="card"><div class="proj">${item.project_name}</div>
-      <div class="meta">${item.note || "当前版本未匹配"}</div></div>`;
-  }
-  const refs = (item.reasons || []).map(r => `
-    <button class="ref" onclick="openClause(${r.clause_id})">
-      <cite>${r.doc_no} ${r.article_no} · 正文 ${r.char_start}–${r.char_end}</cite>${r.quote}</button>`).join("");
-  const mats = (item.materials || []).map(m => {
-    const src = (MATS[item.project_id] || {})[m] || "学校要求";
-    return `<li>${m}<span class="small">（来源：${src}）</span></li>`;
-  }).join("");
-  const notes = (item.notes || []).length ? `<div class="notes">${item.notes.join("；")}</div>` : "";
-  return `<div class="card ${tierClass(item.conclusion)}">
-    <div class="card-top"><div class="proj">${item.project_name}</div>
-      <span class="tier ${tierClass(item.conclusion)}">${item.conclusion_label}</span></div>
-    <div class="meta">
-      ${item.missing_fields && item.missing_fields.length ? "缺项：" + item.missing_fields.join("、") + "　" : ""}
-      ${item.review_required ? "需学校评审　" : ""}${item.standard_note ? "标准：" + item.standard_note : ""}</div>
-    ${refs ? `<div class="sec"><div class="sec-label">依据条款（点击查看原文）</div>${refs}</div>` : ""}
-    ${mats ? `<div class="sec"><div class="sec-label">材料清单</div><ul class="mats">${mats}</ul>
-      <div class="meta">办理渠道：${item.channel || "—"}</div></div>` : ""}
-    ${notes}</div>`;
-}
-
-const STEPS = [["triaged", "已初判"], ["reviewing", "复核中"], ["approved", "已通过"], ["returned", "已退回"], ["appealed", "申诉中"], ["amended", "已改判"]];
-
-function statusBar(data) {
-  const st = data.status || "triaged";
-  const steps = STEPS.map(([k, label]) => `<span class="step ${k === st ? "on" : ""}">${label}</span>`).join("");
-  const canSubmit = st === "triaged";
-  const canAppeal = ["approved", "returned", "amended"].includes(st);
-  return `<div class="panel" style="margin-top:18px">
-    <div class="group-title">办理进度</div>
-    <div class="steps">${steps}</div>
-    <div class="actions" style="margin-top:10px">
-      ${canSubmit ? `<button class="primary" onclick="submitReview()">提交复核</button>` : ""}
-      ${canAppeal ? `<input type="text" id="appeal-reason" placeholder="申诉理由（必填）" style="flex:1;min-width:220px">
-        <button class="ghost" onclick="sendAppeal()">提交申诉</button>` : ""}
-      <button class="ghost" onclick="exportMd()">导出材料包</button>
-      <button class="ghost" onclick="requestExport()">申请导出审批</button>
-      <span class="hint" id="st-msg"></span>
-    </div>
-    <div class="small" style="margin-top:8px">${(data.events || []).map(e => `${fmt(e.created_at)} ${e.action}${e.reason ? "：" + e.reason : ""}`).join("　|　")}</div>
-  </div>`;
-}
-
-function tracePanel(data) {
-  const ag = data.agents || {};
-  const tr = data.trace || [];
-  if (!tr.length) return "";
-  return `<div class="disclaimer" style="margin-bottom:12px">
-    <b>多智能体协同过程</b>（${ag.count || tr.length}/${ag.planned || tr.length} 个代理完成；
-    模式：${ag.mode === "rules" ? "确定性规则，不调用模型" : ag.mode}）<br>
-    ${tr.map(s => `<span class="small">${s.seq}. <b>${s.label}</b>（${s.agent}）· ${s.status} · ${s.ms}ms：
-      ${s.summary}</span>`).join("<br>")}
-    <div class="small">${ag.note || ""}</div>
-  </div>`;
-}
-
-function render(data) {
-  STATE = data;
-  const items = (data.items || []).filter(i => i.conclusion || i.note);
-  const fallback = data.fallback ? `<div class="disclaimer">${data.fallback}</div>` : "";
-  document.getElementById("results").innerHTML = `
-    <div class="result-head"><div><strong>初判结果</strong>
-      <span class="hint">　任务 ${data.task_id} · 政策版本 ${data.policy_version}</span></div></div>
-    <div class="meta">命中 ${data.hit_count} 项（可申请 ${(data.items || []).filter(i => i.conclusion === "eligible").length}，需核实 ${(data.items || []).filter(i => i.conclusion === "need_check").length}）</div>
-    ${tracePanel(data)}
-    ${items.map(card).join("")}
-    ${fallback}
-    ${statusBar(data)}`;
-}
-
-async function submit(e) {
-  e.preventDefault();
-  if (!document.getElementById("consent").checked) {
-    alert("请先勾选隐私授权");
-    return;
-  }
-  const btn = document.getElementById("submit");
-  btn.disabled = true; btn.textContent = "判等中…";
+async function loadTasks() {
+  const list = document.getElementById("todo-list");
   try {
-    const body = collect(); body.consent = true;
-    const res = await fetch("api/triage", { method: "POST", headers: H, body: JSON.stringify(body) });
+    const res = await fetch("api/my-tasks", { headers: { "Content-Type": "application/json" } });
+    if (!res.ok) throw new Error("读取失败");
     const data = await res.json();
-    if (!res.ok) {
-      const msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
-      render({ items: [], task_id: "—", policy_version: "—", hit_count: 0, fallback: "输入有误：" + msg });
-      return;
-    }
-    render(data);
-  } finally {
-    btn.disabled = false; btn.textContent = "生成初判";
+    const items = data.items || [];
+    document.getElementById("task-summary").textContent = `本人办理记录 · ${items.length} 条`;
+    list.innerHTML = items.length
+      ? items.slice(0, 3).map(taskRow).join("")
+      : `<div class="home-todo-empty"><b>还没有办理记录</b><span>完成一次初判后，进度会显示在这里。</span><a href="triage.html">开始初判 ↗</a></div>`;
+  } catch (e) {
+    document.getElementById("task-summary").textContent = "本人办理记录";
+    list.innerHTML = `<div class="home-todo-empty"><b>暂时无法读取</b><span>请稍后重试，或直接打开办理进度。</span><a href="progress.html">打开办理进度 ↗</a></div>`;
   }
 }
 
-async function refresh() {
-  if (!STATE.task_id || STATE.task_id === "—") return;
-  const res = await fetch("api/triage/" + STATE.task_id, { headers: H });
-  if (res.ok) render(await res.json());
-}
-
-async function submitReview() {
-  if (!confirm("确认把本次初判提交人工复核？提交后进入教师审核队列。")) return;
-  const res = await fetch(`api/triage/${STATE.task_id}/submit`, { method: "POST", headers: H });
-  const data = await res.json();
-  if (!res.ok) { document.getElementById("st-msg").textContent = data.detail; return; }
-  await refresh();
-}
-
-async function sendAppeal() {
-  const reason = document.getElementById("appeal-reason").value.trim();
-  if (!reason) { document.getElementById("st-msg").textContent = "申诉须填写理由"; return; }
-  if (!confirm("确认提交申诉？提交后会进入人工裁决并留下记录。")) return;
-  const res = await fetch(`api/triage/${STATE.task_id}/appeal`, { method: "POST", headers: H,
-    body: JSON.stringify({ reason }) });
-  const data = await res.json();
-  if (!res.ok) { document.getElementById("st-msg").textContent = data.detail; return; }
-  await refresh();
-}
-
-function exportMd() { if (STATE.task_id) window.location.href = "api/export/" + STATE.task_id; }
-
-async function requestExport() {
-  if (!STATE.task_id) return;
-  const res = await fetch("api/export-requests", { method: "POST", headers: H, body: JSON.stringify({ task_id: STATE.task_id }) });
-  const data = await res.json();
-  document.getElementById("st-msg").textContent = res.ok
-    ? `已提交导出审批（申请号 ${data.request_id}），待管理员审批后可导出`
-    : (data.detail || "提交失败");
-}
-
-async function ask() {
-  const q = document.getElementById("q").value.trim();
-  if (q.length < 2) return;
-  const res = await fetch("api/qa", { method: "POST", headers: H, body: JSON.stringify({ question: q }) });
-  const data = await res.json();
-  const hits = (data.hits || []).map(h => `
-    <button class="ref" onclick="openClause(${h.clause_id})">
-      <cite>${h.doc_no} ${h.article_no}</cite>${h.quote.slice(0, 120)}…</button>`).join("");
-  document.getElementById("qa").innerHTML = `
-    <div class="notes" style="background:${data.refused ? "#fff8ec" : "#f2faf8"};color:#24504a">
-      ${data.answer.replace(/\n/g, "<br>")}</div>
-    <div class="small" style="margin-top:6px">回答模式：${data.mode_label || "离线规则模式"} · 提示词版本 ${data.prompt_version || "qa_v1"}${data.fallback ? "（在线失败已回退）" : ""}</div>
-    ${hits ? `<div class="sec-label" style="margin-top:10px">命中条款</div>${hits}` : ""}
-    <div class="small">${data.disclaimer || ""}</div>`;
-}
-
-function openClause(id) {
-  fetch("api/clause/" + id, { headers: H }).then(r => r.json()).then(c => {
-    document.getElementById("m-title").textContent = c.policy_title;
-    document.getElementById("m-doc").textContent = `${c.doc_no} ${c.article_no} · 正文 ${c.char_start}–${c.char_end} · 台账状态 ${c.status}`;
-    document.getElementById("m-quote").textContent = c.text;
-    document.getElementById("m-flag").textContent = c.status === "pending_verify" ? "该文件文号与生效日期尚未人工核对，仅供内部验证" : "";
-    document.getElementById("m-link").href = c.url || "#";
-    document.getElementById("mask").style.display = "flex";
-  });
-}
-function closeModal() { document.getElementById("mask").style.display = "none"; }
-
-document.getElementById("form").addEventListener("submit", submit);
-document.getElementById("ask").addEventListener("click", ask);
-document.getElementById("reset").addEventListener("click", () => {
-  document.querySelectorAll("[data-code]").forEach(el => { el.value = ""; });
-  document.getElementById("results").innerHTML = "";
-  document.getElementById("consent").checked = false;
-});
-document.getElementById("demo").addEventListener("click", async () => {
-  await loadSample("complete");
-  document.getElementById("consent").checked = true;
-  document.getElementById("form").requestSubmit();
-});
-
-boot().then(async () => {
-  const q = new URLSearchParams(location.search).get("case");
-  if (q && await loadSample(q)) {
-    document.getElementById("consent").checked = true;
-    document.getElementById("form").requestSubmit();
-  }
-});
-</script>
-<script>
-(async function () {
+async function loadPolicyMeta() {
   try {
+    const res = await fetch("api/health");
+    if (!res.ok) throw new Error("读取失败");
+    const h = await res.json();
+    const modes = { offline: "离线政策模式", online: "在线政策咨询", mock: "测试模式" };
+    document.getElementById("provider-mode").textContent = modes[h.llm_mode] || "政策服务状态未知";
+    const verified = Number.isFinite(Number(h.policy_docs_verified)) ? Number(h.policy_docs_verified) : null;
+    const total = Number.isFinite(Number(h.policy_docs_total)) ? Number(h.policy_docs_total) : null;
+    document.getElementById("policy-number").innerHTML = verified === null || total === null
+      ? `—<small> / — 份已核文</small>`
+      : `${verified}<small> / ${total} 份已核文</small>`;
+    document.getElementById("policy-meta").innerHTML =
+      `已核文 ${verified ?? "—"}/${total ?? "—"} 份<br>只检索已发布条款`;
+  } catch (e) {
+    document.getElementById("provider-mode").textContent = "政策服务状态暂不可用";
+    document.getElementById("provider-pulse").classList.add("muted");
+    document.getElementById("policy-number").innerHTML = `—<small> / — 份已核文</small>`;
+    document.getElementById("policy-status-copy").textContent = "政策库状态暂时不可用";
+  }
+}
+
+document.getElementById("home-ask-form").addEventListener("submit", event => {
+  event.preventDefault();
+  const question = document.getElementById("home-question").value.trim();
+  const feedback = document.getElementById("home-ask-feedback");
+  if (question.length < 2) { feedback.textContent = "请先输入至少两个字的问题。"; document.getElementById("home-question").focus(); return; }
+  try {
+    sessionStorage.setItem("qa-workbench-prefill", question.slice(0, 1200));
+    location.href = "qa.html";
+  } catch (e) {
+    feedback.textContent = "暂时无法安全带入问题，请直接打开政策问答后输入。";
+  }
+});
+
+document.addEventListener("click", event => {
+  const prompt = event.target.closest("[data-home-prompt]");
+  if (!prompt) return;
+  const question = document.getElementById("home-question");
+  question.value = prompt.dataset.homePrompt;
+  question.focus();
+  document.getElementById("home-ask-feedback").textContent = "问题已填入，确认后开始咨询。";
+});
+
+(async function init() {
+  try {
+    const caseName = new URLSearchParams(location.search).get("case");
+    if (caseName) { location.replace("triage.html?case=" + encodeURIComponent(caseName)); return; }
     const me = await (await fetch("api/auth/me")).json();
-    if (!me.logged_in || me.role !== "student") {
-      location.href = "login.html";
-      return;
-    }
+    if (!me.logged_in || me.role !== "student") { location.href = "login.html"; return; }
+    document.getElementById("student-nickname").textContent = me.nickname || "同学";
     const b = document.getElementById("me-badge");
-    if (!b) return;
-    b.innerHTML = `已登录：${me.nickname}（${me.role}）` +
+    b.innerHTML = `已登录：${me.nickname}（${ROLE_TEXT[me.role] || me.role}）` +
       (me.must_change ? ` · <b style="color:#b45309">临时密码，请尽快改密</b>` : "") +
       ` · <a href="#" onclick="fetch('api/auth/logout',{method:'POST'}).then(()=>location.reload());return false">退出</a>`;
-  } catch (e) { /* 未登录保持演示态 */ }
+    await Promise.allSettled([loadTasks(), loadPolicyMeta()]);
+  } catch (e) {
+    location.href = "login.html";
+  }
 })();
 </script>
 </body>

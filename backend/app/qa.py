@@ -163,6 +163,8 @@ def write_snapshot(version_id: str, db_path: Path | str | None = None) -> dict:
             "atoms": c.execute("SELECT COUNT(*) FROM policy_snapshot_atom WHERE version_id=?", (version_id,)).fetchone()[0]}
     c.commit()
     c.close()
+    from .qa_evidence import snapshot_metadata
+    snapshot_metadata(version_id, db_path)
     return stat
 
 
@@ -233,7 +235,8 @@ def answer(question: str, limit: int = 3, db_path: Path | str | None = None,
     question = (question or "").strip()
     version_id = version_id or ensure_snapshot(db_path)
     off = [w for w in OFF_DOMAIN if w in question]
-    hits = [] if off else find_hits(question, limit, db_path, version_id)
+    from .qa_evidence import retrieve
+    hits = [] if off else retrieve(question, {"policy_version": version_id}, db_path, limit, legacy=True)
     if not hits:
         mode = provider.mode()
         return {"refused": True, "reason": "off_domain" if off else "no_hit",
@@ -244,7 +247,7 @@ def answer(question: str, limit: int = 3, db_path: Path | str | None = None,
                 "disclaimer": DISCLAIMER}
     res = provider.compose(question, hits)
     citations = [{"clause_id": h["clause_id"], "doc_no": h["doc_no"], "article_no": h["article_no"],
-                  "span": [h["char_start"], h["char_end"]]} for h in hits]
+                  "span": [h["char_start"], h["char_end"]], "version_id": h["version_id"]} for h in hits]
     mode = res["mode"]
     return {"refused": False, "hits": hits, "citations": citations,
             "answer": res["text"], "confidence": "high" if len(hits) >= 2 else "low",

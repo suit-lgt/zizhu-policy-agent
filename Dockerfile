@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir fastapi==0.115.* "uvicorn[standard]==0.30.*" "pyp
 
 COPY backend ./backend
 COPY frontend ./frontend
+COPY prompts ./prompts
 COPY data ./data
 
 EXPOSE 8000

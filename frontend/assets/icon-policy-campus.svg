@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="校级政策校园标记">
+  <defs>
+    <linearGradient id="roof" x1="15" y1="19" x2="49" y2="30" gradientUnits="userSpaceOnUse"><stop stop-color="#ffc978"/><stop offset="1" stop-color="#e88e43"/></linearGradient>
+    <linearGradient id="wall" x1="18" y1="29" x2="46" y2="50" gradientUnits="userSpaceOnUse"><stop stop-color="#fffdf5"/><stop offset="1" stop-color="#f4dfbd"/></linearGradient>
+    <linearGradient id="tree" x1="8" y1="33" x2="18" y2="46" gradientUnits="userSpaceOnUse"><stop stop-color="#8ed6a6"/><stop offset="1" stop-color="#4ca878"/></linearGradient>
+    <filter id="shadow" x="4" y="13" width="56" height="48" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur in="SourceAlpha" stdDeviation="2"/><feOffset dy="2"/><feComponentTransfer><feFuncA type="linear" slope=".16"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="32" cy="55" rx="24" ry="3" fill="#9a652d" opacity=".12"/>
+  <g filter="url(#shadow)">
+    <path d="m13 27 19-12 19 12-19 7-19-7Z" fill="url(#roof)" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M18 29.5h28v18H18v-18Z" fill="url(#wall)" stroke="#fff" stroke-width="1.3"/>
+    <path d="M24 32.5h5v5h-5zm11 0h5v5h-5z" fill="#83b6d5" stroke="#fff" stroke-width=".8"/>
+    <path d="M29 47.5v-8c0-2 1.3-3.2 3-3.2s3 1.2 3 3.2v8" fill="#d98745" stroke="#fff" stroke-width="1"/>
+    <path d="M15 47.5h34v4H15v-4Z" fill="#d8914d" stroke="#fff" stroke-width="1"/>
+    <path d="M9 40c0-4 3-7 6-7s6 3 6 7-3 7-6 7-6-3-6-7Z" fill="url(#tree)" stroke="#fff" stroke-width="1.2"/>
+    <path d="M14 46v5m-2 0h4" stroke="#9d7042" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M50 22V12" stroke="#3878b7" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M50.5 12.5h6l-2.4 2.2 2.4 2h-6v-4.2Z" fill="#6dbbd2" stroke="#fff" stroke-width=".7" stroke-linejoin="round"/>
+  </g>
+</svg>

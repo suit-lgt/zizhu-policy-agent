@@ -28,7 +28,12 @@ def chk(name,cond,extra=""):
 
 code, html = call("GET","/login.html"); chk("登录页可取", code==200 and "注册新账号" in html and "注册四步说明" in html, f"{code}")
 code, html = call("GET","/admin.html"); chk("后台含审核与入库页", code==200 and "注册审核" in html and "上传并入库" in html and 'id="tab-registrations"' in html and '<a href="/">学生端</a>' not in html)
-code, html = call("GET","/"); chk("学生页含协同面板且无跨端入口", code==200 and "多智能体协同过程" in html and ("登录/注册" in html or "请先登录或注册" in html) and "/admin.html" not in html and "/review.html" not in html)
+code, html = call("GET","/"); chk("学生首页含分页入口且无跨端入口", code==200 and all(x in html for x in ("triage.html","qa.html","progress.html")) and "/admin.html" not in html and "/review.html" not in html)
+code, html = call("GET","/triage.html"); chk("AI 初判独立页可取", code==200 and "生成初判" in html and "多智能体协同过程" in html and "#ask-panel" not in html)
+code, html = call("GET","/qa.html"); chk("政策咨询工作台可取", code==200 and all(x in html for x in ("我的咨询", "本轮办理依据", "qa-workbench.js", "qa-workbench.css")))
+code, js = call("GET","/static/qa-workbench.js"); chk("政策咨询脚本可取", code==200 and all(x in js for x in ("api/qa/sessions", "EventSource", "api/qa/turns")))
+code, css = call("GET","/static/qa-workbench.css"); chk("政策咨询样式可取", code==200 and ".consult-grid" in css and ".consult-evidence" in css)
+code, html = call("GET","/progress.html"); chk("办理进度独立页可取", code==200 and "我的任务" in html and "api/triage/" in html)
 body={"stage":"高职专科","enrollment":"全日制在校","normal_program":True,"grade":2,"income_difficulty":"已认定困难","special_hardship":"特别困难","veteran":False,"orphan":True,"martyr_child":False,"disabled":False,"hukou_province":"广东","academic":"一般","other_provincial_aid":False,"consent":True}
 code, raw = call("POST","/api/triage",body,headers={"X-Role":"student","X-User":"student_demo"})
 data=json.loads(raw) if code==200 else {}

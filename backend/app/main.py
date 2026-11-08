@@ -132,6 +132,10 @@ db.init_schema()
 db.seed()
 accounts.ensure_bootstrap_admin()
 qa.ensure_snapshot(POLICY_DB)
+from .qa_routes import router as qa_router
+app.include_router(qa_router)
+from .qa_sessions import recover as recover_qa_turns
+recover_qa_turns()
 
 
 # ---------- 身份依赖 ----------
@@ -209,6 +213,21 @@ def index():
 @app.get("/index.html", response_class=HTMLResponse)
 def index_html():
     return index()
+
+
+@app.get("/triage.html", response_class=HTMLResponse)
+def triage_page():
+    return (STATIC / "triage.html").read_text(encoding="utf-8")
+
+
+@app.get("/qa.html", response_class=HTMLResponse)
+def qa_page():
+    return (STATIC / "qa.html").read_text(encoding="utf-8")
+
+
+@app.get("/progress.html", response_class=HTMLResponse)
+def progress_page():
+    return (STATIC / "progress.html").read_text(encoding="utf-8")
 
 
 @app.get("/review.html", response_class=HTMLResponse)
@@ -306,6 +325,7 @@ def get_triage(task_id: str, u: dict = Depends(any_user)):
     row = owned_or_staff(task_id, u)
     result = json.loads(row["result_json"])
     result["status"] = row["status"]
+    result["created_at"] = row["created_at"]
     result["events"] = events_of(task_id)
     return result
 
@@ -350,6 +370,33 @@ def review(task_id: str, payload: Any = Body(default=None), u: dict = Depends(re
     c.close()
     db.audit(u["user"], u["role"], f"review_{action}", task_id, {"reason": reason})
     return {"task_id": task_id, "status": status}
+
+
+@app.get("/api/my-tasks")
+def my_tasks(limit: int = Query(20, ge=1, le=50), u: dict = Depends(student)):
+    """学生本人的最近初判任务，用于“办理进度”和学生端首页。"""
+    c = db.conn()
+    rows = c.execute(
+        "SELECT task_id,created_at,status,policy_version,result_json FROM triage_task"
+        " WHERE COALESCE(owner,'student_demo')=? ORDER BY created_at DESC LIMIT ?",
+        (u["user"], limit)).fetchall()
+    out = []
+    for r in rows:
+        try:
+            payload = json.loads(r["result_json"])
+        except Exception:
+            payload = {}
+        items = payload.get("items") or []
+        out.append({
+            "task_id": r["task_id"], "created_at": r["created_at"], "status": r["status"],
+            "policy_version": r["policy_version"],
+            "hit_count": payload.get("hit_count", 0),
+            "summary": [{"project_id": i.get("project_id"), "project_name": i.get("project_name"),
+                         "conclusion": i.get("conclusion"), "conclusion_label": i.get("conclusion_label")}
+                        for i in items if i.get("conclusion")],
+        })
+    c.close()
+    return {"items": out, "count": len(out)}
 
 
 @app.get("/api/tasks")
@@ -647,9 +694,9 @@ def qa_answer(payload: Any = Body(default=None), u: dict = Depends(any_user)):
         raise HTTPException(status_code=422, detail="问题至少 2 个字")
     result = qa.answer(question, db_path=POLICY_DB)
     if result["refused"]:
-        db.audit(u["user"], u["role"], "qa_refused", question[:40])
+        db.audit(u["user"], u["role"], "qa_refused", "legacy", {"version": result.get("version_id")})
     else:
-        db.audit(u["user"], u["role"], "qa", question[:40],
+        db.audit(u["user"], u["role"], "qa", "legacy",
                  {"hits": len(result["hits"]), "mode": result["mode"]})
     return result
 
@@ -781,7 +828,14 @@ def audit_log(limit: int = Query(50, ge=1, le=500), u: dict = Depends(audit_read
 
 # ---------- 原文与导出 ----------
 @app.get("/api/clause/{clause_id}")
-def get_clause(clause_id: int, u: dict = Depends(any_user)):
+def get_clause(clause_id: int, version_id: str | None = Query(None), u: dict = Depends(any_user)):
+    if version_id:
+        from .qa_evidence import resolve
+        try:
+            item = resolve(version_id, clause_id, POLICY_DB)
+        except LookupError:
+            raise HTTPException(404, "该版本条款不存在") from None
+        return {**item, "text": item["quote"], "status": "published_snapshot"}
     c = policy_conn()
     row = c.execute(
         "SELECT c.id,c.clause_no,c.text,c.char_start,c.char_end,p.doc_no,p.title,p.url,"

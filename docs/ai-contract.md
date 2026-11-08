@@ -46,3 +46,11 @@
 实测环境：`FUND_LLM_MODE=offline`（默认，不联网）。`online` 模式的校验与回退已实现（`python -m backend.app.provider --selftest` 5/5），但**未接真实端点**，故在线模式指标 NOT_RUN。
 
 合成／演示数据与真实评测数据分开；测试集不得为避免失败而修改；无基线先测基线，不写目标值为实测值。
+
+## 政策咨询工作台（2026-11-08，已实现）
+
+本轮增量以[功能规格](../.scratch/policy-consult-workbench/spec.md)为准。模型只消费最小必要 EvidenceBundle；资格三档只能复制程序已给定的本人结果，无 rule_result 时不得生成资格判断。输出建议为 answer＋claims(evidence_ids)＋next_action_ids；引用、免责声明、模式标签由程序拼装。
+
+继续保留完整回答校验，正文通过后才分块展示；可以先显示已核验的面板。程序核对证据 ID、数字／单位／日期、三档一致性、动作白名单与敏感内容。命中两条不代表事实可靠，confidence 旧字段只作兼容，不作为前端可靠率。
+
+旧 `POST /api/qa` 仍读 `prompts/qa_v1.md`；工作台的在线证据选择器读 `prompts/qa_workbench_v2.md`，只允许返回本轮 `evidence_ids`。正文、资格三档、金额、材料和动作均由程序生成，因此模型不能自行输出未经核验的政策断言。在线、离线、Mock 均走相同证据契约；真实在线端点评测和人工语义支持度仍为 NOT_RUN。

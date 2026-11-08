@@ -105,6 +105,9 @@ def init_schema() -> None:
     c.commit()
     c.close()
 
+    from .qa_sessions import init_schema as init_qa_schema
+    init_qa_schema()
+
 
 def user_enabled(user_id: str) -> bool:
     """账号是否启用；库里没有的账号按启用处理（演示态 X-User 可自定义）。"""

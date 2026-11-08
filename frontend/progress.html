@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>办理进度 · 资助政策智能体</title>
+<link rel="stylesheet" href="static/style.css">
+<link rel="stylesheet" href="static/progress-polish.css">
+</head>
+<body class="student-app progress-page">
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit">
+      <div class="logo-mark"><img src="static/assets/icon-policy-assistant.svg" alt="" width="40" height="40"></div>
+      <div>
+        <div class="brand-title">资助政策智能体</div>
+        <div class="brand-sub">ZIZHU POLICY AGENT</div>
+      </div>
+    </a>
+    <nav class="top-nav">
+      <a href="index.html">学生端</a>
+      <a href="triage.html">AI 初判</a>
+      <a href="qa.html">政策问答</a>
+      <a class="on" href="progress.html">办理进度</a>
+    </nav>
+    <div class="top-actions">
+      <span class="env-pill"><span class="pulse"></span>离线规则模式</span>
+      <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录或注册</a></div>
+    </div>
+  </header>
+
+  <div class="page-grid">
+    <aside class="sidebar">
+      <nav class="side-card progress-shortcuts" aria-label="办理进度导航">
+        <div class="side-eyebrow">快速查看</div>
+        <a href="#current-panel"><span>01</span><b>当前办理</b><small>状态与可用操作</small></a>
+        <a href="#events-panel"><span>02</span><b>办理记录</b><small>复核与申诉留痕</small></a>
+        <a href="#task-list-panel"><span>03</span><b>我的任务</b><small>切换其他初判任务</small></a>
+      </nav>
+      <div class="side-card">
+        <div class="side-eyebrow">留痕规则</div>
+        <div class="side-meta">复核、申诉、改判和导出审批都会留下记录，记录不可删除。</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="hero compact progress-hero">
+        <div class="hero-copy">
+          <div class="eyebrow">APPLICATION TRACK · AUDIT TRAIL</div>
+          <h1>办理进度</h1>
+          <p>查看本人初判任务的当前状态、复核与申诉记录，并完成下一步操作。</p>
+        </div>
+        <div class="progress-hero-widget"><img src="static/assets/progress-archive.svg" alt="" width="58" height="58"><span><b>本人任务</b><small>记录可追溯</small></span></div>
+      </section>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">当前状态</div>
+          <div class="stat-value" id="stat-status">—<span>—</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">命中项目</div>
+          <div class="stat-value" id="stat-hit">—<span>项</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">政策版本</div>
+          <div class="stat-value" id="stat-version" style="font-size:16px">—<span>当前</span></div>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <div class="primary-column">
+          <div class="panel" id="current-panel">
+            <div class="panel-head">
+              <div>
+                <div class="group-title">当前办理</div>
+                <div class="hint" id="current-hint">正在读取你的任务</div>
+              </div>
+              <a class="ghost" href="triage.html">重新初判</a>
+            </div>
+            <div id="current">
+          <div class="empty-state">
+                <b>正在读取办理记录</b>请稍候。
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="task-list-panel">
+            <div class="panel-head">
+              <div>
+                <div class="group-title">我的任务</div>
+                <div class="hint">只显示你本人创建的初判任务。</div>
+              </div>
+            </div>
+            <div id="task-list">
+              <div class="empty-state">正在读取任务列表。</div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="insight-col">
+          <div class="insight-card">
+            <div class="progress-insight-head"><img src="static/assets/progress-status.svg" alt=""><div class="side-eyebrow">状态说明</div></div>
+            <h3>复核不是改判</h3>
+            <p>“复核中”表示已进入教师审核队列；“已通过/已退回”是审核动作，不等于最终资格认定。</p>
+          </div>
+          <div class="insight-card">
+            <div class="progress-insight-head"><img src="static/assets/progress-review-guide.svg" alt=""><div class="side-eyebrow">申诉边界</div></div>
+            <h3>有理由才可申诉</h3>
+            <p>对已通过、已退回或已改判的结果可以提交申诉，必须填写理由，进入人工裁决并留痕。</p>
+          </div>
+          <div class="insight-card">
+            <div class="progress-insight-head"><img src="static/assets/progress-package.svg" alt=""><div class="side-eyebrow">材料包</div></div>
+            <h3>自己下载 vs 对外报送</h3>
+            <p>“下载个人材料包”仅供本人查看；“申请对外报送”需管理员审批，批准后导出件会带审批人。</p>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+const H = { "Content-Type": "application/json" };
+const ROLE_TEXT = { student: "学生", counselor: "教师", admin: "管理员", auditor: "审计员" };
+const STATUS_TEXT = {
+  triaged: "已初判", reviewing: "复核中", approved: "已通过",
+  returned: "已退回", appealed: "申诉中", amended: "已改判"
+};
+const EVENT_TEXT = { submit_review: "提交复核", approve: "复核通过", return: "复核退回", appeal: "提交申诉", amend: "改判", submit: "提交复核" };
+const TASK_KEY = "zizhu_task_id";
+let CURRENT = null;
+
+function fmt(s) {
+  if (!s) return "—";
+  const d = new Date(s);
+  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }).replace(/\//g, "-");
+}
+
+function statusBadge(st) {
+  const cls = st === "approved" ? "eligible" : st === "returned" ? "not_applicable" : st === "reviewing" || st === "appealed" ? "need_check" : "";
+  return `<span class="tier ${cls}">${STATUS_TEXT[st] || st || "—"}</span>`;
+}
+
+function steps(st) {
+  const review = st === "triaged" ? ["future", "等待提交复核", "提交后由学校人员核对"]
+    : st === "reviewing" ? ["active", "人工复核中", "等待审核人员处理"]
+    : ["done", st === "approved" ? "复核已通过" : st === "returned" ? "复核已退回" : "人工复核已完成", "审核操作已记录"];
+  const appeal = st === "appealed" ? ["active", "申诉处理中", "等待人工裁决"]
+    : st === "amended" ? ["done", "改判已留痕", "原结论与改判均可追溯"]
+    : ["available", "申诉与后续办理", ["approved", "returned"].includes(st) ? "如有异议，可填写理由提交申诉" : "复核结束后，可按需提交申诉"];
+  const note = st === "triaged" ? "初判已完成。你可以提交人工复核，也可以先下载个人材料包。"
+    : st === "reviewing" ? "任务已进入人工复核队列；处理结果会显示在办理记录中。"
+    : st === "appealed" ? "申诉已提交，原初判与复核记录会继续保留。"
+    : st === "amended" ? "人工已完成改判，原始结论和改判过程均保留。"
+    : "人工复核结果已记录；如对结果有异议，可按页面指引申诉。";
+  return `<ol class="progress-journey" aria-label="办理阶段">
+    <li class="journey-done"><span class="journey-mark">✓</span><b>初判完成</b><small>已生成政策匹配结果</small></li>
+    <li class="journey-${review[0]}" aria-current="${review[0] === "active" ? "step" : "false"}"><span class="journey-mark">02</span><b>${review[1]}</b><small>${review[2]}</small></li>
+    <li class="journey-${appeal[0]}" aria-current="${appeal[0] === "active" ? "step" : "false"}"><span class="journey-mark">03</span><b>${appeal[1]}</b><small>${appeal[2]}</small></li>
+  </ol><p class="journey-note">${note}</p>`;
+}
+
+function renderTaskList(items, selectedId) {
+  if (!items.length) {
+    document.getElementById("task-list").innerHTML = `<div class="empty-state">
+      <img class="progress-empty-art" src="static/assets/progress-empty-task.svg" alt=""><b>还没有办理任务</b><span>完成一次 AI 初判后，可在这里查看结果、提交复核并跟进处理进度。</span><a class="btn-ghost" href="triage.html">开始初判</a>
+    </div>`;
+    return;
+  }
+  document.getElementById("task-list").innerHTML = `<div class="task-list">${items.map(t => `
+    <div class="task-row">
+      <div class="task-main">
+        <div class="task-id">资助初判任务${t.task_id === selectedId ? ' <span class="tier eligible">当前</span>' : ""}</div>
+        <div class="task-meta">${fmt(t.created_at)} · 命中 ${t.hit_count || 0} 项 · 政策版 ${esc(t.policy_version || "—")}</div>
+        <div class="progress-task-ref">任务编号 <code>${esc(t.task_id)}</code></div>
+      </div>
+      <div class="task-side">${statusBadge(t.status)}
+        <a class="btn-ghost" href="progress.html?task=${encodeURIComponent(t.task_id)}">查看</a>
+      </div>
+    </div>`).join("")}</div>`;
+}
+
+function renderSummary(data) {
+  const items = (data.items || []).filter(i => i.conclusion || i.note);
+  if (!items.length) return `<div class="empty-state">本次没有命中项目。${data.fallback ? esc(data.fallback) : ""}</div>`;
+  return `<div class="task-list">${items.map(i => `
+    <div class="task-row">
+      <div class="task-main">
+        <div class="task-id">${esc(i.project_name || i.project_id)}</div>
+        <div class="task-meta">${i.missing_fields && i.missing_fields.length ? "缺项：" + esc(i.missing_fields.join("、")) + " · " : ""}${i.review_required ? "需学校评审 · " : ""}${esc(i.note || "已匹配有效条款")}</div>
+      </div>
+      <div class="task-side">${i.conclusion ? `<span class="tier ${i.conclusion}">${esc(i.conclusion_label || i.conclusion)}</span>` : `<span class="tier not_applicable">未匹配</span>`}</div>
+    </div>`).join("")}</div>`;
+}
+
+function renderDetail(data) {
+  CURRENT = data;
+  localStorage.setItem(TASK_KEY, data.task_id);
+  const st = data.status || "triaged";
+  document.getElementById("stat-status").innerHTML = `${STATUS_TEXT[st] || st}<span>当前</span>`;
+  document.getElementById("stat-hit").innerHTML = `${data.hit_count || 0}<span>项</span>`;
+  document.getElementById("stat-version").innerHTML = `${esc(data.policy_version || "—")}<span>本次任务</span>`;
+  document.getElementById("current-hint").textContent = `创建于 ${fmt(data.created_at)} · 任务编号 ${esc(data.task_id)}`;
+  const canSubmit = st === "triaged";
+  const canAppeal = ["approved", "returned", "amended"].includes(st);
+  const events = (data.events || []).map(e =>
+    `<article class="progress-event"><span class="event-dot" aria-hidden="true"></span><div><b>${esc(EVENT_TEXT[e.action] || e.action)}</b><time>${fmt(e.created_at)}</time>${e.reason ? `<p>${esc(e.reason)}</p>` : ""}</div></article>`).join("");
+  document.getElementById("current").innerHTML = `
+    ${steps(st)}
+    <div class="progress-actions" aria-label="当前任务可执行操作">
+      ${canSubmit ? `<button class="progress-action primary" onclick="submitReview()"><img src="static/assets/progress-review.svg" alt=""><span><b>提交人工复核</b><small>由学校人员进一步核对</small></span></button>` : ""}
+      ${canAppeal ? `<div class="progress-appeal-action"><label for="appeal-reason">申诉理由</label><input type="text" id="appeal-reason" placeholder="请说明希望复核的原因"><button class="progress-action ghost" onclick="sendAppeal()"><img src="static/assets/progress-appeal.svg" alt=""><span><b>提交申诉</b><small>进入人工裁决并留痕</small></span></button></div>` : ""}
+      <button class="progress-action ghost" onclick="exportMd()" title="下载仅供本人查看的材料包"><img src="static/assets/progress-download.svg" alt=""><span><b>下载个人材料包</b><small>仅供本人查看</small></span></button>
+      <button class="progress-action ghost" onclick="requestExport()" title="对外报送需管理员审批"><img src="static/assets/progress-report.svg" alt=""><span><b>申请对外报送</b><small>提交后等待管理员审批</small></span></button>
+      <span class="hint" id="st-msg" role="status" aria-live="polite"></span>
+    </div>
+    <div class="sec-label" id="events-panel" style="margin-top:18px">办理记录</div>
+    <div class="progress-events">${events || `<div class="progress-empty-record"><img src="static/assets/progress-empty-record.svg" alt=""><span><b>暂无操作记录</b><small>提交复核或申诉后，处理状态会更新在这里。</small></span></div>`}</div>
+    <div class="sec-label" style="margin-top:16px">本次初判摘要</div>
+    ${renderSummary(data)}`;
+}
+
+async function loadTasks() {
+  const res = await fetch("api/my-tasks", { headers: H });
+  if (!res.ok) throw new Error("读取任务失败");
+  const data = await res.json();
+  return data.items || [];
+}
+
+async function selectTask(id) {
+  if (!id) return;
+  const res = await fetch("api/triage/" + encodeURIComponent(id), { headers: H });
+  if (!res.ok) {
+    const msg = res.status === 403 ? "只能查看本人任务" : "任务读取失败";
+    document.getElementById("current").innerHTML = `<div class="disclaimer">${msg}</div>`;
+    return;
+  }
+  renderDetail(await res.json());
+}
+
+async function refresh() {
+  if (!CURRENT) return;
+  await selectTask(CURRENT.task_id);
+  renderTaskList(await loadTasks(), CURRENT.task_id);
+}
+
+async function submitReview() {
+  if (!CURRENT) return;
+  if (!confirm("确认把本次初判提交人工复核？提交后进入教师审核队列。")) return;
+  const res = await fetch(`api/triage/${CURRENT.task_id}/submit`, { method: "POST", headers: H });
+  if (!res.ok) { document.getElementById("st-msg").textContent = "提交失败，请稍后重试"; return; }
+  await refresh();
+}
+
+async function sendAppeal() {
+  if (!CURRENT) return;
+  const reason = document.getElementById("appeal-reason").value.trim();
+  if (!reason) { document.getElementById("st-msg").textContent = "申诉须填写理由"; return; }
+  if (!confirm("确认提交申诉？提交后会进入人工裁决并留下记录。")) return;
+  const res = await fetch(`api/triage/${CURRENT.task_id}/appeal`, { method: "POST", headers: H, body: JSON.stringify({ reason }) });
+  if (!res.ok) { document.getElementById("st-msg").textContent = "申诉提交失败"; return; }
+  await refresh();
+}
+
+function exportMd() { if (CURRENT) window.location.href = "api/export/" + CURRENT.task_id; }
+
+async function requestExport() {
+  if (!CURRENT) return;
+  const res = await fetch("api/export-requests", { method: "POST", headers: H, body: JSON.stringify({ task_id: CURRENT.task_id }) });
+  const data = await res.json();
+  document.getElementById("st-msg").textContent = res.ok
+    ? `已提交对外报送申请（申请号 ${data.request_id}），待管理员审批`
+    : (data.detail || "提交失败");
+}
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
+
+(async function init() {
+  try {
+    const me = await (await fetch("api/auth/me")).json();
+    if (!me.logged_in || me.role !== "student") { location.href = "login.html"; return; }
+    const b = document.getElementById("me-badge");
+    b.innerHTML = `已登录：${me.nickname}（${ROLE_TEXT[me.role] || me.role}）` +
+      (me.must_change ? ` · <b style="color:#b45309">临时密码，请尽快改密</b>` : "") +
+      ` · <a href="#" onclick="fetch('api/auth/logout',{method:'POST'}).then(()=>location.reload());return false">退出</a>`;
+    const items = await loadTasks();
+    const fromUrl = new URLSearchParams(location.search).get("task");
+    const remembered = localStorage.getItem(TASK_KEY);
+    const id = fromUrl || remembered || (items[0] && items[0].task_id);
+    renderTaskList(items, id);
+    if (id) await selectTask(id);
+    else document.getElementById("current").innerHTML = `<div class="empty-state">
+      <b>还没有可办理的任务</b>先完成一次 AI 初判，再回来查看状态与下一步。<a class="btn-ghost" href="triage.html">开始初判</a>
+    </div>`;
+  } catch (e) {
+    location.href = "login.html";
+  }
+})();
+</script>
+</body>
+</html>

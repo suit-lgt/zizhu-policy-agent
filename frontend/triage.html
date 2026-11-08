@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI 初判 · 资助政策智能体</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body class="student-app triage-page">
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit">
+      <div class="logo-mark"><img src="static/assets/icon-policy-assistant.svg" alt="" width="40" height="40"></div>
+      <div>
+        <div class="brand-title">资助政策智能体</div>
+        <div class="brand-sub">ZIZHU POLICY AGENT</div>
+      </div>
+    </a>
+    <nav class="top-nav">
+      <a href="index.html">学生端</a>
+      <a class="on" href="triage.html">AI 初判</a>
+      <a href="qa.html">政策问答</a>
+      <a href="progress.html">办理进度</a>
+    </nav>
+    <div class="top-actions">
+      <span class="env-pill"><span class="pulse"></span>离线规则模式</span>
+      <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录或注册</a></div>
+    </div>
+  </header>
+
+  <div class="page-grid">
+    <aside class="sidebar">
+      <div class="side-card">
+        <div class="side-eyebrow">当前政策口径</div>
+        <div class="side-metric">3<span>级政策</span></div>
+        <div class="side-meta">国家 · 广东省 · 校级<br>只检索已核文并发布的条款</div>
+      </div>
+      <div class="side-card">
+        <div class="side-eyebrow">办理顺序</div>
+        <div class="side-flow">
+          <div><i>1</i>填写学籍与家庭情况</div>
+          <div><i>2</i>勾选隐私授权并初判</div>
+          <div><i>3</i>查看结论与政策依据</div>
+          <div><i>4</i>按需提交复核或申诉</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="hero compact triage-hero">
+        <div class="hero-copy">
+          <div class="eyebrow">资助资格 · 条件初筛</div>
+          <h1>先了解可申请的资助</h1>
+          <p>按实际情况填写。系统只匹配已发布的政策条款，缺少的信息会标记为“需核实”。</p>
+          <div class="hero-actions">
+            <a class="ghost" href="progress.html">查看我的办理进度</a>
+          </div>
+        </div>
+        <div class="triage-hero-note"><span class="triage-note-mark" aria-hidden="true">✓</span><span><b>结论有依据</b><small>每条结果都可查看对应政策原文</small></span></div>
+      </section>
+
+      <div class="main-grid">
+        <div class="primary-column">
+          <div class="disclaimer">
+            AI 初判仅供参考，最终以资助部门认定为准。系统只出“可申请／需核实／暂不适用”，不作符合性认定，也不代替政务系统。
+          </div>
+
+          <div class="panel">
+            <div class="panel-head triage-form-head">
+              <div>
+                <div class="triage-form-title"><span class="triage-form-kicker">资格初筛</span><h2>填写你的情况</h2></div>
+                <div class="hint">可以分段填写，不确定的项目可先留空。</div>
+              </div>
+              <div class="triage-completion" aria-live="polite"><strong id="filled-count">0</strong><span>项已填写</span><div class="triage-progress-track"><i id="filled-progress"></i></div></div>
+            </div>
+            <div class="triage-sections-nav" id="section-nav" aria-label="跳转到情况分组"></div>
+            <form id="form">
+              <div id="groups"></div>
+              <label class="consent">
+                <input type="checkbox" id="consent">
+                <span>我已阅读：系统只采集判定所需的学籍与家庭情况字段，用于当次初判；不保存姓名，不用于其他用途，可随时撤回并删除本次任务。</span>
+              </label>
+              <div class="actions triage-actions">
+                <button type="submit" class="primary" id="submit">生成初判</button>
+                <button type="button" class="ghost" id="reset">清空</button>
+                <span class="hint">只填一部分也可以，缺项会进入“需核实”。</span>
+              </div>
+            </form>
+          </div>
+
+          <section class="results" id="results">
+            <div class="empty-state" style="margin-top:4px">
+              <b>填写后在这里查看初判结果</b>
+              每条结论都会列出命中的政策条款、材料清单与办理渠道。
+            </div>
+          </section>
+        </div>
+
+        <aside class="insight-col">
+          <div class="insight-card">
+            <div class="side-eyebrow">结果怎么看</div>
+            <h3>三档结论，不替你下定性</h3>
+            <p>“可申请”表示已匹配到有效条款；“需核实”表示还缺字段或需学校评审；“暂不适用”也不等于最终不符合。</p>
+          </div>
+          <div class="insight-card">
+            <div class="side-eyebrow">依据与留痕</div>
+            <h3>每条引用都能回到原文</h3>
+            <ul class="insight-list">
+              <li>引用由系统拼装，不由模型编造</li>
+              <li>条款带文号、条号与字符位置</li>
+              <li>复核、申诉与改判全过程留痕</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="mask" class="modal-mask">
+  <div class="modal">
+    <h3 id="m-title">条款原文</h3>
+    <div class="doc" id="m-doc"></div>
+    <div class="quote" id="m-quote"></div>
+    <div class="flag" id="m-flag"></div>
+    <div class="foot">
+      <a id="m-link" class="ghost" href="#" target="_blank" rel="noopener">打开官方页面</a>
+      <button class="ghost" onclick="closeModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GROUPS = [
+  { title: "学籍情况", short: "学籍", note: "确认就读阶段与在校状态", art: "school", codes: ["stage", "enrollment", "normal_program", "grade"] },
+  { title: "家庭经济情况", short: "家庭", note: "选择与家庭经济状况相关的项目", art: "home", codes: ["income_difficulty", "income_band", "special_hardship"] },
+  { title: "特殊身份", short: "身份", note: "仅填写适用于本人的身份信息", art: "identity", codes: ["veteran", "orphan", "martyr_child", "disabled"] },
+  { title: "其他情况", short: "补充", note: "补充户籍地及学校相关情况", art: "location", codes: ["hukou_province", "other_provincial_aid", "school_tier"] },
+  { title: "评审类", short: "评审", note: "此项仅供参考，不参与判等", art: "review", codes: ["academic"] }
+];
+const H = { "Content-Type": "application/json" };
+const ROLE_TEXT = { student: "学生", counselor: "教师", admin: "管理员", auditor: "审计员" };
+const STEPS = [["triaged", "已初判"], ["reviewing", "复核中"], ["approved", "已通过"], ["returned", "已退回"], ["appealed", "申诉中"], ["amended", "已改判"]];
+const EVENT_TEXT = { submit_review: "提交复核", approve: "复核通过", return: "复核退回", appeal: "提交申诉", amend: "改判", submit: "提交复核" };
+const DOC_STATUS = { pending_verify: "待核文", verified: "已核文", published: "已发布" };
+let FIELDS = {}, MATS = {}, STATE = {};
+
+function fmt(s) {
+  if (!s) return "";
+  const d = new Date(s);
+  return d.toLocaleString("zh-CN", { timeZone: "Asia/Shanghai", hour12: false }).replace(/\//g, "-");
+}
+
+function ctrl(f) {
+  const id = "f_" + f.code;
+  let html = `<label for="${id}">${f.name}</label>`;
+  if (f.type === "bool") {
+    html += `<select id="${id}" data-code="${f.code}"><option value="">未填</option><option value="true">是</option><option value="false">否</option></select>`;
+  } else if (f.type === "enum") {
+    const opts = (f.values || []).map(v => `<option value="${v}">${v}</option>`).join("");
+    html += `<select id="${id}" data-code="${f.code}"><option value="">未填</option>${opts}</select>`;
+  } else {
+    html += `<input id="${id}" data-code="${f.code}" type="number" min="1" max="8" placeholder="未填">`;
+  }
+  return `<div>${html}<div class="hint" style="margin-top:4px">${f.description || ""}</div></div>`;
+}
+
+async function boot() {
+  const res = await fetch("api/fields", { headers: H });
+  if (!res.ok) throw new Error("字段读取失败");
+  const payload = await res.json();
+  FIELDS = Object.fromEntries(payload.fields.map(f => [f.code, f]));
+  document.getElementById("groups").innerHTML = GROUPS.map((g, i) => {
+    const fields = g.codes.filter(c => FIELDS[c]).map(c => ctrl(FIELDS[c])).join("");
+    if (!fields) return "";
+    return `<section class="triage-group" id="triage-group-${i}" aria-labelledby="triage-title-${i}"><header class="triage-group-head"><img src="static/assets/triage-${g.art}.svg" alt="" width="48" height="48"><div><h3 id="triage-title-${i}">${g.title}</h3><p>${g.note}</p></div><span class="triage-group-index">${String(i + 1).padStart(2, "0")}</span></header><div class="grid">${fields}</div></section>`;
+  }).join("");
+  document.getElementById("section-nav").innerHTML = GROUPS.map((g, i) => `<a href="#triage-group-${i}">${g.short}</a>`).join("");
+  document.querySelectorAll("[data-code]").forEach(el => el.addEventListener("input", updateCompletion));
+  document.querySelectorAll("[data-code]").forEach(el => el.addEventListener("change", updateCompletion));
+  updateCompletion();
+  const m = await (await fetch("api/materials", { headers: H })).json();
+  m.items.forEach(x => { MATS[x.project_id] = MATS[x.project_id] || {}; MATS[x.project_id][x.name] = x.source_type; });
+}
+
+function updateCompletion() {
+  const controls = [...document.querySelectorAll("[data-code]")];
+  const filled = controls.filter(el => el.value.trim() !== "").length;
+  document.getElementById("filled-count").textContent = filled;
+  document.getElementById("filled-progress").style.width = `${controls.length ? filled / controls.length * 100 : 0}%`;
+}
+
+function collect() {
+  const out = {};
+  document.querySelectorAll("[data-code]").forEach(el => {
+    const v = el.value.trim();
+    if (v === "") return;
+    const code = el.dataset.code;
+    if (FIELDS[code] && FIELDS[code].type === "int") out[code] = Number(v);
+    else if (FIELDS[code] && FIELDS[code].type === "bool") out[code] = (v === "true");
+    else out[code] = v;
+  });
+  return out;
+}
+
+function fill(sample) {
+  document.querySelectorAll("[data-code]").forEach(el => {
+    const code = el.dataset.code;
+    if (!(code in sample)) { el.value = ""; return; }
+    const v = sample[code];
+    el.value = (v === true ? "true" : v === false ? "false" : String(v));
+  });
+  updateCompletion();
+}
+
+async function loadSample(name) {
+  const all = await (await fetch("api/samples", { headers: H })).json();
+  if (!all[name]) return false;
+  fill(all[name]);
+  return true;
+}
+
+function tierClass(c) { return c || "not_applicable"; }
+
+function card(item) {
+  if (!item.conclusion) {
+    return `<div class="card"><div class="proj">${item.project_name}</div>
+      <div class="meta">${item.note || "当前版本未匹配"}</div></div>`;
+  }
+  const refs = (item.reasons || []).map(r => `
+    <button class="ref" onclick="openClause(${r.clause_id})">
+      <cite>${r.doc_no} ${r.article_no} · 正文 ${r.char_start}–${r.char_end}</cite>${r.quote}</button>`).join("");
+  const mats = (item.materials || []).map(m => {
+    const src = (MATS[item.project_id] || {})[m] || "学校要求";
+    return `<li>${m}<span class="small">（来源：${src}）</span></li>`;
+  }).join("");
+  const notes = (item.notes || []).length ? `<div class="notes">${item.notes.join("；")}</div>` : "";
+  return `<div class="card ${tierClass(item.conclusion)}">
+    <div class="card-top"><div class="proj">${item.project_name}</div>
+      <span class="tier ${tierClass(item.conclusion)}">${item.conclusion_label}</span></div>
+    <div class="meta">
+      ${item.missing_fields && item.missing_fields.length ? "缺项：" + item.missing_fields.join("、") + "　" : ""}
+      ${item.review_required ? "需学校评审　" : ""}${item.standard_note ? "标准：" + item.standard_note : ""}</div>
+    ${refs ? `<div class="sec"><div class="sec-label">依据条款（点击查看原文）</div>${refs}</div>` : ""}
+    ${mats ? `<div class="sec"><div class="sec-label">材料清单</div><ul class="mats">${mats}</ul>
+      <div class="meta">办理渠道：${item.channel || "—"}</div></div>` : ""}
+    ${notes}</div>`;
+}
+
+function progressLink(taskId) {
+  return taskId && taskId !== "—"
+    ? `<a class="primary" href="progress.html?task=${encodeURIComponent(taskId)}">前往办理进度</a>`
+    : "";
+}
+
+function statusBar(data) {
+  const st = data.status || "triaged";
+  const steps = STEPS.map(([k, label]) => `<span class="step ${k === st ? "on" : ""}">${label}</span>`).join("");
+  return `<div class="panel" style="margin-top:18px">
+    <div class="panel-head">
+      <div>
+        <div class="group-title">办理进度</div>
+        <div class="hint">本页只展示结论；提交复核、申诉和下载材料包，请进入办理进度页。</div>
+      </div>
+      ${progressLink(data.task_id)}
+    </div>
+    <div class="steps">${steps}</div>
+    <div class="small" style="margin-top:8px">${(data.events || []).map(e => `${fmt(e.created_at)} ${EVENT_TEXT[e.action] || e.action}${e.reason ? "：" + e.reason : ""}`).join("　|　")}</div>
+  </div>`;
+}
+
+function tracePanel(data) {
+  const ag = data.agents || {};
+  const tr = data.trace || [];
+  if (!tr.length) return "";
+  return `<div class="disclaimer" style="margin-bottom:12px">
+    <b>多智能体协同过程</b>（${ag.count || tr.length}/${ag.planned || tr.length} 个代理完成；
+    模式：${ag.mode === "rules" ? "确定性规则，不调用模型" : ag.mode}）<br>
+    ${tr.map(s => `<span class="small">${s.seq}. <b>${s.label}</b>（${s.agent}）· ${s.status === "ok" ? "完成" : (s.status === "fallback" ? "回退" : s.status)} · ${s.ms}ms：
+      ${s.summary}</span>`).join("<br>")}
+    <div class="small">${ag.note || ""}</div>
+  </div>`;
+}
+
+function render(data) {
+  STATE = data;
+  if (data.task_id && data.task_id !== "—") localStorage.setItem("zizhu_task_id", data.task_id);
+  const items = (data.items || []).filter(i => i.conclusion || i.note);
+  const fallback = data.fallback ? `<div class="disclaimer">${data.fallback}</div>` : "";
+  document.getElementById("results").innerHTML = `
+    <div class="result-head"><div><strong>初判结果</strong>
+      <span class="hint">　任务 ${data.task_id} · 政策版本 ${data.policy_version}</span></div></div>
+    <div class="meta">命中 ${data.hit_count} 项（可申请 ${(data.items || []).filter(i => i.conclusion === "eligible").length}，需核实 ${(data.items || []).filter(i => i.conclusion === "need_check").length}）</div>
+    ${tracePanel(data)}
+    ${items.map(card).join("")}
+    ${fallback}
+    ${statusBar(data)}`;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function submit(e) {
+  e.preventDefault();
+  if (!document.getElementById("consent").checked) {
+    alert("请先勾选隐私授权");
+    return;
+  }
+  const btn = document.getElementById("submit");
+  btn.disabled = true; btn.textContent = "判等中…";
+  try {
+    const body = collect(); body.consent = true;
+    const res = await fetch("api/triage", { method: "POST", headers: H, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) {
+      const msg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail || data);
+      document.getElementById("results").innerHTML = `<div class="disclaimer">输入有误：${msg}</div>`;
+      return;
+    }
+    render(data);
+  } finally {
+    btn.disabled = false; btn.textContent = "生成初判";
+  }
+}
+
+function openClause(id) {
+  fetch("api/clause/" + id, { headers: H }).then(r => r.json()).then(c => {
+    document.getElementById("m-title").textContent = c.policy_title;
+    document.getElementById("m-doc").textContent = `${c.doc_no} ${c.article_no} · 正文 ${c.char_start}–${c.char_end} · 台账状态 ${DOC_STATUS[c.status] || c.status}`;
+    document.getElementById("m-quote").textContent = c.text;
+    document.getElementById("m-flag").textContent = c.status === "pending_verify" ? "该文件文号与生效日期尚未人工核对，仅供内部验证" : "";
+    document.getElementById("m-link").href = c.url || "#";
+    document.getElementById("mask").style.display = "flex";
+  });
+}
+function closeModal() { document.getElementById("mask").style.display = "none"; }
+
+async function showConsultHandoff() {
+  const handoff = new URLSearchParams(location.search).get("handoff");
+  if (!handoff) return;
+  const res = await fetch("api/qa/handoffs/" + encodeURIComponent(handoff));
+  const data = await res.json();
+  if (!res.ok) {
+    document.getElementById("results").innerHTML = `<div class="disclaimer">咨询引导已失效：${esc(data.detail || "请从政策咨询页面重新进入")}</div>`;
+    return;
+  }
+  const names = data.project_codes || [];
+  const notice = document.createElement("div");
+  notice.className = "disclaimer";
+  notice.innerHTML = `<b>已从政策咨询进入初判。</b> 系统仅带来咨询项目线索${names.length ? "（" + names.map(esc).join("、") + "）" : ""}，不会带入聊天中的个人情况。请重新核对所有字段并勾选授权后再生成初判。`;
+  document.querySelector("#form").before(notice);
+}
+
+document.getElementById("form").addEventListener("submit", submit);
+document.getElementById("reset").addEventListener("click", () => {
+  document.querySelectorAll("[data-code]").forEach(el => { el.value = ""; });
+  document.getElementById("results").innerHTML = "";
+  document.getElementById("consent").checked = false;
+  updateCompletion();
+});
+
+(async function init() {
+  try {
+    const me = await (await fetch("api/auth/me")).json();
+    if (!me.logged_in || me.role !== "student") { location.href = "login.html"; return; }
+    const b = document.getElementById("me-badge");
+    b.innerHTML = `已登录：${me.nickname}（${ROLE_TEXT[me.role] || me.role}）` +
+      (me.must_change ? ` · <b style="color:#b45309">临时密码，请尽快改密</b>` : "") +
+      ` · <a href="#" onclick="fetch('api/auth/logout',{method:'POST'}).then(()=>location.reload());return false">退出</a>`;
+    await boot();
+    await showConsultHandoff();
+    const q = new URLSearchParams(location.search).get("case");
+    if (q && await loadSample(q)) {
+      document.getElementById("consent").checked = true;
+      document.getElementById("form").requestSubmit();
+    }
+  } catch (e) {
+    location.href = "login.html";
+  }
+})();
+</script>
+</body>
+</html>

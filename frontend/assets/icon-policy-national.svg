@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="国家政策建筑标记">
+  <defs>
+    <linearGradient id="roof" x1="12" y1="19" x2="52" y2="30" gradientUnits="userSpaceOnUse"><stop stop-color="#5aa4f3"/><stop offset="1" stop-color="#2368c5"/></linearGradient>
+    <linearGradient id="stone" x1="18" y1="29" x2="46" y2="52" gradientUnits="userSpaceOnUse"><stop stop-color="#fff"/><stop offset="1" stop-color="#b8daf7"/></linearGradient>
+    <linearGradient id="step" x1="14" y1="48" x2="50" y2="57" gradientUnits="userSpaceOnUse"><stop stop-color="#83baf0"/><stop offset="1" stop-color="#3d80cf"/></linearGradient>
+    <filter id="shadow" x="7" y="14" width="50" height="47" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur in="SourceAlpha" stdDeviation="2"/><feOffset dy="2"/><feComponentTransfer><feFuncA type="linear" slope=".18"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <ellipse cx="32" cy="55" rx="22" ry="3" fill="#2762a8" opacity=".12"/>
+  <g filter="url(#shadow)">
+    <path d="m10 25 22-13 22 13-22 8-22-8Z" fill="url(#roof)" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M16 27.5 32 33l16-5.5v3.8L32 37l-16-5.7v-3.8Z" fill="#f6c56c"/>
+    <path d="M17 33.5h30v15H17v-15Z" fill="url(#stone)" stroke="#fff" stroke-width="1.2"/>
+    <path d="M22 35v12m7-12v12m7-12v12m7-12v12" stroke="#5b96d1" stroke-width="3.2" stroke-linecap="round"/>
+    <path d="M14 47.5h36v4H14v-4Z" fill="url(#step)" stroke="#fff" stroke-width="1.2"/>
+    <path d="M11 52h42v3.5H11V52Z" fill="#2c69b6" stroke="#fff" stroke-width="1"/>
+  </g>
+  <path d="M45 8v9" stroke="#467db7" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M46 8.5h8l-3 3 3 2.7h-8V8.5Z" fill="#e97865" stroke="#fff" stroke-width=".8" stroke-linejoin="round"/>
+  <circle cx="32" cy="25" r="2" fill="#ffe19a"/>
+</svg>

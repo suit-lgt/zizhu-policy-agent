@@ -7,23 +7,59 @@
 <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <h1>审核工作台</h1>
-      <div class="sub">待复核任务、结论摘要、通过／退回、批量初筛、两级看板、预警；申诉裁决仅管理员可用</div>
+<div class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="review.html" style="text-decoration:none;color:inherit">
+      <div class="logo-mark"><img src="static/assets/icon-policy-assistant.svg" alt="" width="40" height="40"></div>
+      <div>
+        <div class="brand-title">资助政策智能体</div>
+        <div class="brand-sub">REVIEW WORKSPACE</div>
+      </div>
+    </a>
+    <nav class="top-nav">
+      <a class="on" href="review.html">审核工作台</a>
+      <a href="#board">概览</a>
+      <a href="#tasks">任务队列</a>
+    </nav>
+    <div class="top-actions">
+      <span class="env-pill"><span class="pulse"></span>人工复核留痕</span>
+      <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录教师／审核账号</a></div>
     </div>
-    <div class="badge" id="me-badge">未登录 · <a href="login.html">请先登录教师／审核账号</a></div>
   </header>
 
-  <nav>
-    <a class="on" href="review.html">审核工作台</a>
-    <a id="nav-admin" href="admin.html" style="display:none">管理后台</a>
-  </nav>
+  <div class="page-grid">
+    <aside class="sidebar">
+      <div class="side-nav-title">审核工作台</div>
+      <nav class="side-nav">
+        <a class="on" href="review.html">审核工作台</a>
+        <a id="nav-admin" href="admin.html" style="display:none">管理后台</a>
+      </nav>
+      <div class="side-card">
+        <div class="side-eyebrow">复核边界</div>
+        <div class="side-meta">复核只改变任务状态与留痕，不改判政策口径；改判须走申诉裁决并记录理由。</div>
+      </div>
+      <div class="tabs side-tabs" id="tabs">
+        <button data-status="reviewing" class="on">待复核</button>
+        <button data-status="approved">已通过</button>
+        <button data-status="returned">已退回</button>
+        <button data-status="appealed">申诉中</button>
+      </div>
+    </aside>
 
-  <div class="disclaimer">复核只改变任务状态与留痕，不改判政策口径；改判须走申诉裁决并记录理由。</div>
+    <main class="main">
+      <section class="hero compact">
+        <div class="hero-copy">
+          <div class="eyebrow">HUMAN REVIEW · AUDIT TRAIL</div>
+          <h1>审核工作台</h1>
+          <p>待复核任务、结论摘要、通过／退回、批量初筛、两级看板与预警。所有操作保留操作人、理由与时间。</p>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-chip"><span>复核动作</span><b>通过 / 退回</b></div>
+          <div class="hero-chip"><span>留痕要求</span><b>理由不可缺</b></div>
+        </div>
+      </section>
 
-  <div class="panel" id="board"></div>
+      <div class="panel" id="board"></div>
   <div class="panel" id="warn" style="margin-top:14px"></div>
   <div class="panel" id="levels" style="margin-top:14px"></div>
 
@@ -38,18 +74,13 @@
     </div>
   </div>
 
-  <div class="tabs" id="tabs">
-    <button data-status="reviewing" class="on">待复核</button>
-    <button data-status="approved">已通过</button>
-    <button data-status="returned">已退回</button>
-    <button data-status="appealed">申诉中</button>
-  </div>
-
   <section id="tasks"></section>
 
   <div class="panel" id="appeals-panel" style="margin-top:22px;display:none">
     <div class="group-title">待处理申诉</div>
     <div id="appeals" class="small">加载中…</div>
+  </div>
+    </main>
   </div>
 </div>
 
@@ -57,6 +88,8 @@
 const H = { "Content-Type": "application/json" };
 const HA = { "Content-Type": "application/json" };
 let STATUS = "reviewing", CAN_HANDLE_APPEAL = false, CAN_REVIEW = false;
+const STATUS_TEXT = { triaged: "已初判", reviewing: "待复核", approved: "已通过", returned: "已退回", appealed: "申诉中", amended: "已改判" };
+const statusText = s => STATUS_TEXT[s] || s;
 
 function fmt(s) {
   if (!s) return "";
@@ -66,16 +99,18 @@ function fmt(s) {
 
 async function loadBoard() {
   const b = await (await fetch("api/board", { headers: H })).json();
-  const st = Object.entries(b.by_status || {}).map(([k, v]) => `${k} ${v}`).join("　");
+  const st = Object.entries(b.by_status || {}).map(([k, v]) => `${statusText(k)} ${v}`).join("　");
   document.getElementById("board").innerHTML = `
-    <div class="group-title">概览</div>
-    <div class="grid">
-      <div><div class="small">任务总数</div><div style="font-size:22px">${b.tasks}</div></div>
-      <div><div class="small">退回率</div><div style="font-size:22px">${(b.return_rate * 100).toFixed(1)}%</div></div>
-      <div><div class="small">待处理申诉</div><div style="font-size:22px">${b.appeals_open}</div></div>
-      <div><div class="small">结论分布</div><div class="small">${Object.entries(b.conclusions || {}).map(([k, v]) => k + " " + v).join("　")}</div></div>
+    <div class="panel-head">
+      <div class="group-title">概览</div>
+      <span class="small">状态：${st}</span>
     </div>
-    <div class="small" style="margin-top:8px">状态：${st}</div>`;
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">任务总数</div><div class="stat-value">${b.tasks}</div></div>
+      <div class="stat-card"><div class="stat-label">退回率</div><div class="stat-value">${(b.return_rate * 100).toFixed(1)}<span>%</span></div></div>
+      <div class="stat-card"><div class="stat-label">待处理申诉</div><div class="stat-value">${b.appeals_open}</div></div>
+    </div>
+    <div class="small">结论分布：${Object.entries(b.conclusions || {}).map(([k, v]) => k + " " + v).join("　") || "—"}</div>`;
 }
 
 function taskCard(t) {
@@ -85,9 +120,9 @@ function taskCard(t) {
       <input type="text" id="r-${t.task_id}" placeholder="退回理由（通过可留空）" style="flex:1;min-width:220px">
       <button class="primary" onclick="decide('${t.task_id}','approve')">通过</button>
       <button class="danger" onclick="decide('${t.task_id}','return')">退回</button>
-    </div>` : `<div class="small">审计员只读；复核需教师或管理员操作。</div>`) : `<div class="small">状态：${t.status}</div>`;
+    </div>` : `<div class="small">审计员只读；复核需教师或管理员操作。</div>`) : `<div class="small">状态：${statusText(t.status)}</div>`;
   return `<div class="card">
-    <div class="card-top"><div class="proj">${t.task_id}</div><span class="tier">${t.status}</span></div>
+    <div class="card-top"><div class="proj">${t.task_id}</div><span class="tier">${statusText(t.status)}</span></div>
     <div class="meta">提交时间 ${fmt(t.created_at)} · 命中 ${t.hit_count} 项 · 版本 ${t.policy_version}</div>
     <div class="steps" style="margin-top:8px">${chips}</div>
     ${actions}</div>`;
@@ -98,7 +133,7 @@ async function loadTasks() {
   const data = await res.json();
   const host = document.getElementById("tasks");
   host.innerHTML = data.count ? data.items.map(taskCard).join("") :
-    `<div class="panel hint">${STATUS} 下没有任务。</div>`;
+    `<div class="panel hint">${statusText(STATUS)} 下没有任务。</div>`;
 }
 
 async function decide(taskId, action) {
@@ -212,8 +247,6 @@ document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click
   STATUS = b.dataset.status;
   loadTasks();
 }));
-
-loadBoard(); loadTasks(); loadWarnings(); loadLevels(); loadBatch();
 </script>
 <script>
 (async function () {
@@ -234,11 +267,12 @@ loadBoard(); loadTasks(); loadWarnings(); loadLevels(); loadBatch();
     CAN_REVIEW = ["counselor", "admin"].includes(me.role);
     const batchPanel = document.getElementById("batch-panel");
     if (batchPanel) batchPanel.style.display = CAN_REVIEW ? "" : "none";
-    loadTasks();
+    loadBoard(); loadWarnings(); loadLevels(); loadTasks();
     if (CAN_REVIEW) loadBatch();
     const b = document.getElementById("me-badge");
     if (!b) return;
-    b.innerHTML = `已登录：${me.nickname}（${me.role}）` +
+    const ROLE_TEXT = { student: "学生", counselor: "教师", admin: "管理员", auditor: "审计员" };
+    b.innerHTML = `已登录：${me.nickname}（${ROLE_TEXT[me.role] || me.role}）` +
       (me.must_change ? ` · <b style="color:#b45309">临时密码，请尽快改密</b>` : "") +
       ` · <a href="#" onclick="fetch('api/auth/logout',{method:'POST'}).then(()=>location.reload());return false">退出</a>`;
   } catch (e) { /* 未登录保持演示态 */ }

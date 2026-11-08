@@ -11,7 +11,7 @@
 启动（项目根执行）：
 
 ```powershell
-D:\Sjq\anaconda_install\python.exe -X utf8 -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
+python -X utf8 -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
 
 统一用项目根作为工作目录，`data/` 与 `frontend/` 通过 `main.py` 里的项目根定位，不依赖当前目录。

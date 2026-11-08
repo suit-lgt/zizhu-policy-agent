@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 280" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">小暖</title>
+  <desc id="desc">手持政策文件夹的暖橙色小熊猫向导</desc>
+  <defs>
+    <linearGradient id="fur" x1="50" y1="40" x2="194" y2="228" gradientUnits="userSpaceOnUse"><stop stop-color="#FFB66B"/><stop offset="1" stop-color="#E97742"/></linearGradient>
+    <linearGradient id="cream" x1="76" y1="92" x2="169" y2="210" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF4DF"/><stop offset="1" stop-color="#F8D9B5"/></linearGradient>
+    <linearGradient id="scarf" x1="90" y1="137" x2="151" y2="166" gradientUnits="userSpaceOnUse"><stop stop-color="#2C86D9"/><stop offset="1" stop-color="#1459AE"/></linearGradient>
+  </defs>
+  <!-- tail -->
+  <path d="M166 203c34 12 51 34 37 50-11 13-34 6-50-5" stroke="#C95E38" stroke-width="17" stroke-linecap="round"/>
+  <path d="M184 222c11 2 18 8 20 14" stroke="#F6C189" stroke-width="9" stroke-linecap="round"/>
+  <!-- body -->
+  <path d="M71 148c-8 17-15 48-8 72 5 18 24 28 56 28 37 0 62-12 66-34 4-20-4-53-17-70" fill="url(#fur)"/>
+  <path d="M87 162c-5 15-8 38-2 55 5 14 17 21 35 21 22 0 36-8 39-23 3-15-2-38-8-53" fill="url(#cream)"/>
+  <!-- ears -->
+  <path d="M67 72 47 38c-3-5 1-11 7-10l39 9M172 72l22-34c3-5-1-11-7-10l-40 10" fill="#E97742"/>
+  <path d="m66 57-8-15 19 4m87 11 10-16-20 5" fill="#F8C99B"/>
+  <!-- head -->
+  <path d="M50 91c0-40 30-66 70-66s70 26 70 66c0 42-26 70-70 70S50 133 50 91Z" fill="url(#fur)"/>
+  <path d="M68 103c4-21 18-33 34-30 12 2 18 13 18 28 0 22-14 38-32 37-16-1-24-15-20-35Zm104 0c-4-21-18-33-34-30-12 2-18 13-18 28 0 22 14 38 32 37 16-1 24-15 20-35Z" fill="#713E35"/>
+  <path d="M83 107c8-9 17-11 26-7 7 4 8 12 4 20-5 10-16 15-25 11-9-4-11-15-5-24Zm74 0c-8-9-17-11-26-7-7 4-8 12-4 20 5 10 16 15 25 11 9-4 11-15 5-24Z" fill="#FFF0D9"/>
+  <ellipse cx="99" cy="105" rx="4" ry="5" fill="#24324B"/><ellipse cx="141" cy="105" rx="4" ry="5" fill="#24324B"/>
+  <path d="M113 120c0-5 3-8 7-8s7 3 7 8c0 4-4 7-7 7s-7-3-7-7Z" fill="#59372F"/>
+  <path d="M120 127c-2 6-7 9-13 8m13-8c2 6 7 9 13 8" stroke="#9B5140" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M89 129c5 5 11 6 16 3m46-3c-5 5-11 6-16 3" stroke="#E9A07A" stroke-width="3" stroke-linecap="round"/>
+  <!-- scarf -->
+  <path d="M83 151c12 13 58 16 75-1l-5 22c-17 12-46 12-65 0l-5-21Z" fill="url(#scarf)"/>
+  <path d="m139 165 9 28 17-19-7-18" fill="#2472C6"/>
+  <!-- arms -->
+  <path d="M72 169c-17 8-25 25-15 36 6 7 17 6 28 0m84-33c16 5 24 18 20 29-3 9-13 10-24 4" stroke="#E97742" stroke-width="16" stroke-linecap="round"/>
+  <!-- document folder -->
+  <g transform="rotate(-7 154 202)">
+    <rect x="118" y="181" width="64" height="76" rx="11" fill="#173E77"/>
+    <path d="M132 181v-7c0-4 3-7 7-7h16c4 0 7 3 7 7v7" fill="#275D9E"/>
+    <rect x="128" y="194" width="44" height="50" rx="7" fill="#F8FBFF"/>
+    <path d="m140 218 7 7 14-16" stroke="#E89A36" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- paws in front -->
+  <path d="M113 240c4-9 13-13 21-10 8 3 11 11 7 18-4 7-15 9-24 4-5-3-7-7-4-12Z" fill="#F8D4AE"/>
+  <path d="M172 241c-2-8-10-12-17-9-7 3-9 10-6 16 4 7 13 8 20 3 4-3 5-7 3-10Z" fill="#F8D4AE"/>
+  <!-- feet -->
+  <ellipse cx="91" cy="250" rx="25" ry="12" fill="#C95E38"/><ellipse cx="151" cy="250" rx="27" ry="12" fill="#C95E38"/>
+  <path d="M80 252h9m49 0h9" stroke="#F8D4AE" stroke-width="3" stroke-linecap="round"/>
+</svg>

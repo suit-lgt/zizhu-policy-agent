@@ -15,7 +15,10 @@ backend/                服务端
   scripts/              初始化、备份、恢复、隐私扫描
 frontend/               浏览器端
   login.html            登录／注册
-  index.html            学生端
+  index.html            学生工作台
+  triage.html           AI 初判
+  qa.html               政策咨询工作台
+  progress.html         办理进度
   review.html           教师审核台
   admin.html            管理后台
   style.css             四端共用样式
@@ -51,20 +54,20 @@ docker-compose.yml      四端端口映射
 - `backend/app/main.py`：FastAPI 服务（A—G 接口：核文／发布／回滚／检索、初判／复核／申诉／问答／导出、看板、审计、字典、校级分档）。
 - `backend/app/db.py`：业务库 9 表、审计表禁改触发器、演示账号与材料来源种子；库路径支持 `APP_DB` 环境变量。
 - `backend/app/auth.py`：`fund_session` Cookie 会话与角色权限、越权 403；页面不再发 `X-Role`／`X-User` 身份头。
-- `frontend/index.html`／`review.html`／`admin.html`／`style.css`：学生端、审核工作台、管理后台。
+- `frontend/index.html`／`triage.html`／`qa.html`／`progress.html`／`review.html`／`admin.html`／`style.css`：学生工作台、AI 初判、政策咨询工作台、办理进度、审核工作台、管理后台；咨询页的交互和页面样式在 `qa-workbench.js`／`qa-workbench.css`。
 - `backend/scripts/init_db.py`／`backup.py`／`restore.py`：幂等初始化、备份＋SHA256 清单、恢复＋pre-restore 快照。
-- `tests/smoke.py`：65 项接口冒烟，在 tempdir 库副本上起独立服务，不写真实库。`tests/auth_flow.py`：17 项账号闭环（注册→审核→登录→重置→改密），端口 8033。`tests/ui_flow.py`：10 项页面与上传链路联检，端口 8035。`tests/version_flow.py`：10 项版本发布／回滚内容切换验证，端口 8036。`backend/tools/fact_support.py`：当前版本原子事实支持机器核验并导出人工复核 CSV。`docs/部署与端口设计.md`：四端端口与上线检查。
+- `tests/smoke.py`：65 项接口冒烟，在 tempdir 库副本上起独立服务，不写真实库。`tests/auth_flow.py`：17 项账号闭环（注册→审核→登录→重置→改密），端口 8033。`tests/ui_flow.py`：13 项页面与上传链路联检，端口 8035。`tests/version_flow.py`：10 项版本发布／回滚内容切换验证，端口 8036。`backend/tools/fact_support.py`：当前版本原子事实支持机器核验并导出人工复核 CSV。`docs/部署与端口设计.md`：四端端口与上线检查。
 - `Dockerfile`／`docker-compose.yml`／`.env.example`：容器一键起（已实测构建与启动，容器 `healthy`）。
 - `data/app.db`：业务库（任务、复核事件、申诉、审计、核文、版本、材料、分档；不存姓名）。
 
 ## 运行环境
 
 平台与版本：Windows；采集器只用标准库（实测 Anaconda 自带 Python 与 3.13 均可）。
-依赖安装方式：无第三方依赖；GUI 需带 Tcl 的解释器。业务服务需 `fastapi` 与 `uvicorn`（已装入 `D:\Sjq\anaconda_install`，实测 fastapi 0.162.0 / uvicorn 0.54.0；装后 pip 提示 `jupyter-server 1.23.4` 要求 anyio&lt;4，与本服务无关，只影响 jupyter）。
+依赖安装方式：无第三方依赖；GUI 需带 Tcl 的解释器。业务服务需 `fastapi` 与 `uvicorn`（本地环境已安装 FastAPI 与 Uvicorn；具体版本以当前依赖环境为准）。
 配置项名称与用途：白名单域名在 `backend/tools/policy_collector.py` 的 `ALLOWED_HOSTS`；暂存库 `data/staging/policies.db`；原文快照 `data/staging/raw/`。不含任何密钥。
 本地样例或测试数据：政策原文取自官方栏目页；学生情况一律使用合成样例，不得用真实学生信息。
 
-容器环境备注（2026-11-07 排障后）：Docker Desktop 4.89.0，引擎 29.7.2；`%LOCALAPPDATA%\Docker\wsl` 曾是指向 `D:\DockerData\wsl` 的坏符号链接（目标目录不存在）导致 `WSL_E_DISTRO_NOT_FOUND`，已改为真实目录，旧链接留档在 `Docker\wsl_link_old_20261107`；数据盘 `docker_data.vhdx` 复用自 `Docker\wsl.bak_c盘`。
+容器环境：使用 Docker Desktop 与 Docker Compose；如遇 WSL 发行版启动错误，请检查 Docker Desktop 的 WSL 数据目录配置与目标目录是否存在。
 
 ## 已验证命令
 
@@ -82,17 +85,17 @@ docker-compose.yml      四端端口映射
 | 原子清单导出 | `python -X utf8 backend\tools\atomize.py export` | 项目根 | 已导入 | PASS：`data/atoms/atom_index.md` |
 | 确定性判等自测 | `python -X utf8 backend\tools\triage.py --selftest` | 项目根 | 已切块＋原子已导入 | PASS：12/12（AC-001／002／003＋I-1／I-2／D-010） |
 | 单例判等 | `python -X utf8 backend\tools\triage.py --input data\samples\students.json --case complete --pretty` | 项目根 | 同上 | PASS：5 个项目三档结论，每项带条款与原文偏移 |
-| 启动业务服务 | `D:\Sjq\anaconda_install\python.exe -X utf8 -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8010` | 项目根 | fastapi／uvicorn 已装 | PASS：`/api/health` ok、页面 200、判等 200（2026-11-06） |
+| 启动业务服务 | `python -X utf8 -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8010` | 项目根 | fastapi／uvicorn 已装 | PASS：`/api/health` ok、页面 200、判等 200（2026-11-06） |
 | 业务库初始化 | `python -X utf8 backend\scripts\init_db.py` | 项目根 | 可选 `APP_DB` | PASS：4 用户／16 材料／0 分档／9 任务；政策库 19 份／342 条（2026-11-06） |
-| 三端页面 | `/`、`/review.html`、`/admin.html` | 服务 8010／8011 | 服务已起 | PASS：三页 200；截图 `student_page.png`／`review_page.png`／`admin_page.png` |
+| 三端页面 | `/`、`/triage.html`、`/qa.html`、`/progress.html`、`/review.html`、`/admin.html` | 服务 8010／8011 | 服务已起 | PASS：六页 200；学生端已拆为工作台＋三个独立功能页 |
 | 接口冒烟 | `python -X utf8 tests\smoke.py` | 项目根 | fastapi／uvicorn | PASS：**65/65，exit 0**；tempdir 库副本＋8021 端口，不写真实库 |
 | 备份 | `python -X utf8 backend\scripts\backup.py` | 项目根 | 两库存在 | PASS：`backups/20261107-011327`（2 文件＋SHA256 manifest） |
 | 恢复 | `python -X utf8 backend\scripts\restore.py --from backups\<name>` | 项目根 | 有备份 | NOT_RUN：会覆盖活动库，未在运行态执行（恢复前自动存 pre-restore 快照） |
 | 容器编排校验 | `docker compose config` | 项目根 | Docker CLI | PASS：`name: fund-agent`、8000–8003 四端映射到容器 8000、挂载 `./data`、healthcheck 完整；端口说明见 `docs/部署与端口设计.md` |
 | 容器一键起 | `docker compose build` → `docker compose up -d` | 项目根 | Docker 守护进程 | PASS：镜像 `fund-agent:0.5`，容器 20 秒内 `Up (healthy)`，`/api/health` 显示 3 份已核＋版本 `pv-20261107T041009` |
-| 演示页（含结果） | `http://127.0.0.1:8010/?case=complete` | 浏览器 | 服务已起 | PASS：截图 `docs/demo/triage_page.png` |
+| 演示页（含结果） | `http://127.0.0.1:8010/triage.html?case=complete` | 浏览器 | 服务已起 | PASS：自动填样例并生成结果；隐藏入口，不占学生可见操作区 |
 | 导出核对清单 | `... export` / `... export-clauses` | 项目根 | 已有数据 | PASS：`policy_index.md`、`clause_index.md` |
-| 固定窗口采集 | `D:\Sjq\anaconda_install\python.exe -X utf8 backend\tools\policy_collector.py gui` | 项目根 | 需 Tcl 支持 | 窗口构建 PASS；点击采集未人工实操 |
+| 固定窗口采集 | `python -X utf8 backend\tools\policy_collector.py gui` | 项目根 | 需 Tcl 支持 | 窗口构建 PASS；点击采集未人工实操 |
 | 业务系统启动 | 见上「启动业务服务」 | 项目根 | fastapi／uvicorn | PASS（本机 8010）；容器方式已 PASS（8000） |
 | 真实库核文＋发布 | 管理后台「政策核文」→「版本与回滚」 | 服务已起 | admin 身份 | PASS：3 份核心已核，发布 `pv-20261107T041009`（docs=3／clauses=93／atoms=26） |
 | 问答评测 50 题 | `python -X utf8 backend\tools\qa_eval.py --report docs\eval\qa_eval_report.md` | 项目根 | 政策库已切块 | PASS：50/50（命中 35/35、边界 10/10、拒答 5/5），引用 115 条 0 偏移错误，P95 24.9 ms |
@@ -108,3 +111,7 @@ docker-compose.yml      四端端口映射
 已知限制：19 份政策中 **3 份核心已核文并发布**（财教〔2021〕310号 2021-12-30、财教〔2024〕181号 2024-10-25、粤财规〔2026〕1号 2026-03-01；版本 `pv-20261107T041009`），其余 16 份仍 `pending_verify`，全局 `policy_verified=false`；家庭经济困难认定办法（粤教助〔2023〕2号）与校级分档细则未入库；材料清单 16 条来源标“学校要求”、无条款来源；统一身份仍是演示态 `X-Role`／`X-User`（已加 CAS 占位，`AUTH_MODE=cas` 未配置即 501）；问答为条款关键词检索＋拒答，非语义 RAG；三态 Provider 已实现但默认离线、未接真实模型；50 题评测集已建并自动 50/50 通过，人工事实核验未做；镜像 `fund-agent:0.5` 已构建并 healthy；0.5 已补账号闭环、多智能体 trace、本地上传入库；16 份历史草稿仍未核文且仍可被检索；演示视频未拍。
 
 交付状态：A—G 最小闭环可运行并有页面截图、65 项冒烟与 17 项账号闭环；3 份核心政策已核文发布；容器一键起已实测 `healthy`；未验收；未做学校部署；未实际使用；演示视频未做；0.5 已补真实账号闭环（注册／管理员审核／重置密码／本人改密，全程文字指引）、6 代理协同 trace、本地上传入库＋核文切块发布门禁，`/login.html` 可用；0.6 已补四端端口与默认管理员。
+
+## 政策咨询工作台（2026-11-08，已实现）
+
+工作台已提供本人会话、连续追问、同版原文、办理依据、校验后分块展示、咨询导出与初判引导。[功能规格](.scratch/policy-consult-workbench/spec.md) · [实现验证](docs/verification.md)。旧 `POST /api/qa` 保持单轮兼容；工作台在线证据选择器使用 `qa_workbench_v2`，旧接口仍使用 `qa_v1`。

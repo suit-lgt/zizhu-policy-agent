@@ -181,7 +181,7 @@ NOT_RUN／已知未做：
 
 1. `docker version` 连不上 `npipe`；`docker desktop start` 后台跑了 9 分钟仍 503。
 2. `docker desktop diagnose` 的 bootstrap 日志给出根因：`Wsl/Service/WSL_E_DISTRO_NOT_FOUND` —— Docker 的 WSL 发行版 `docker-desktop` 已被注销。
-3. 进一步发现 `%LOCALAPPDATA%\Docker\wsl` 是指向 `D:\DockerData\wsl` 的**符号链接**，而目标目录不存在（此前把 Docker 数据挪到 D 盘时没把目录建起来）。补建目录后发行版能被重建（`wsl -l -v` 出现 `docker-desktop`），但仍起不来。
+3. WSL 发行版无法启动时，检查 Docker Desktop 配置的数据目录是否存在，并确认 WSL 发行版状态。
 4. 真实错误是 `creating virtual disk: The filename, directory name, or volume label syntax is incorrect` —— Docker 创建 2.7 GB 数据盘 `docker_data.vhdx` 失败，与链接无关。
 5. 处理：把 `wsl` 链接改名为真实目录（`Docker\wsl_link_old_20261107` 留档），并把备份里的 `Docker\wsl.bak_c盘\disk\docker_data.vhdx`（2753 MB）复制到 `Docker\wsl\disk\docker_data.vhdx` 让 Docker 复用已有数据盘。再次 `docker desktop start` 后引擎就绪：`docker info` 返回 server **29.7.2 / linux**。
 
@@ -295,3 +295,175 @@ NOT_RUN／已知未做：
 - 四端 UI 与角色入口审查：学生端移除审核／管理入口；教师端移除学生入口、管理入口仅管理员显示、辅导员隐藏申诉；管理端移除学生入口，审计员改为只读；发布／回滚／停用／注册通过／导出审批／批量复核／申诉裁决增加二次确认。详见 docs/UI审查与角色入口.md；浏览器实测截图 docs/demo/ui_student_nav.png、docs/demo/ui_admin_nav.png。
 - 2026-11-07 源码按前后端分层整理：后端 `backend/app`＋`backend/tools`＋`backend/scripts`，前端 `frontend/*.html`＋`frontend/style.css`；启动入口改为 `backend.app.main:app`，Dockerfile 改为 `COPY backend`／`COPY frontend`。整理后 `smoke 65/65`、`auth 17/17`、`ui 10/10`、`version 10/10`，容器 `Up (healthy)`。本文件早于该日期的记录中出现的 `app/`、`tools/`、`scripts/` 为整理前路径，映射见 `docs/代码目录说明.md`。
 - 2026-11-07 公网子路径部署完成：`https://zhigang.suit-achieve.cn/ZizhuAgent/`。Caddy 精确 301→`/ZizhuAgent/`，`handle_path` 剥离前缀转发 `127.0.0.1:9100`；容器 `zizhu-agent` healthy；四个页面、`static/style.css`、登录（`Set-Cookie Path=/ZizhuAgent`）、`/api/auth/me`、`/api/health` 均通过；根站标题仍为“产教融合智能教学规划系统”。详见 `docs/公网部署记录.md`。
+## 学生端多页改造（2026-11-07）
+
+- 页面结构：`/index.html` 学生工作台、`/triage.html` AI 初判、`/qa.html` 政策问答、`/progress.html` 办理进度；顶栏与侧栏四个入口均为页面级 href，已用 CDP 实测点击“政策问答”从 `index.html` 跳转到 `qa.html`，不再出现 `#ask-panel` 锚点。
+- 后端新增：`GET /api/my-tasks`（仅 student，返回本人最近任务）；`GET /api/triage/{task_id}` 增加 `created_at`，供办理页展示创建时间；页面路由新增 `triage.html`／`qa.html`／`progress.html`。
+- 页面能力：工作台显示本人任务统计与最近办理；初判页保留字段分组、六代理 trace、可回点条款、材料清单；问答页支持提问与命中条款回点；办理页支持查看状态、提交复核、申诉、下载个人材料包、申请对外报送。
+- 验证：`tests/ui_flow.py` 13/13 PASS（含四个学生页 200）；`tests/smoke.py` 65/65 PASS；四页内联脚本 `node --check` PASS；HTMLParser `errors=0 / unclosed=[]`；四页学生端无 `admin.html`／`review.html` 链接，无 `#form-panel`／`#ask-panel`／`#progress` 锚点。
+- 未覆盖：完整 `auth_flow.py`／`version_flow.py` 本轮未重跑；公网与 Docker 未重新构建部署；截图见 `docs/demo/` 与临时目录，尚未替换远端旧图。
+
+## 政策咨询工作台设计迁移验收（2026-11-08，仅文档）
+
+本轮按用户要求将教研咨询的设计思路适配到资助政策问答，完成[主设计](政策咨询工作台迁移设计.md)、[功能规格](../.scratch/policy-consult-workbench/spec.md)、ADR、开发提示词、未接入运行时提示词草案与六张实施票。同步项目入口、术语、AI／数据契约及原 R-005 关联。
+
+| 检查 | 证据与方法 | 结果 |
+|---|---|---|
+| 目标代码事实核对 | 静态阅读 qa.py／provider.py／main.py／db.py／agents.py／qa.html、现有规格和测试 | PASS（只读核对，不等于运行验证） |
+| 文件与引用 | 11 份新设计／提示词／任务文件可 UTF-8 回读；新增片段的 14 个 Markdown 链接有效 | PASS |
+| 需求与验收 | PC-R01—PC-R10，共 10 项；PC-AC01—PC-AC22，共 22 项；6 票依赖均能解析 | PASS（结构检查，不表示 AC 已通过） |
+| 内容边界 | 新增文本未混入无关赛事身份或成果措辞；规则三档与模型解释职责保持分离 | PASS |
+| 原功能不变 | 修改前后逐文件 SHA256：backend／frontend／tests 下源码及现行 prompts/qa_v1.md 共 34 文件一致 | PASS |
+| 运行数据／现行提示词 | 本轮未执行库导入、写入、快照生成、启动或发布；provider 仍指向 qa_v1 | 未做业务变更 |
+| 新会话、面板、证据解析与分块展示 | 仅有设计和票，尚无对应实现 | NOT_RUN |
+| 新版自动回归、真实在线模型、人工支持度、学生操作 | 未执行，历史测试数字不挪作本轮结果 | NOT_RUN |
+| 部署／公网更新 | 未构建、未部署 | NOT_RUN |
+
+说明：AGENTS I-2 原先只列两种输出措辞，与 CONTEXT 和 D-011 已有三档不一致。本轮澄清为“程序三档，模型仅解释已有结果”，没有改动判等代码或政策条件。
+
+变更清单与源码基线见 `.scratch/policy-consult-workbench/design-change-manifest.json`；本机临时备份未纳入版本库。
+
+本段仅记录当时的设计检查；后续实现与自动验收见“政策咨询工作台实现验收”一节。自动化通过不证明政策事实、真实端点或业务使用效果。
+
+## 政策咨询工作台实现验收（2026-11-08）
+
+本节是对前述设计迁移的实现验收，所有接口检查都在复制的业务库和政策库上运行，不写入真实学生数据、不导入或发布政策、未部署。
+
+| 检查 | 命令／方式 | 结果 |
+|---|---|---|
+| 单元与契约 | `python -X utf8 -m unittest discover -s tests -p test_qa_workbench.py -v` | PASS 18/18：版本/草稿隔离、低相关拒答、材料来源、追问、幂等、隐私最小化、中断、面板快照、模型选择校验；测试清理临时 SQLite 连接，兼容 Windows 文件锁 |
+| 新链路隔离联调 | `python -X utf8 tests/qa_workbench_flow.py` | PASS 11/11：真实 Cookie、无 Cookie 拒绝、跨账号会话/handoff 拒绝、事件流、版本原文、导出、最小初判引导 |
+| 既有接口回归 | `python -X utf8 tests/smoke.py` | PASS 65/65 |
+| 版本回归 | `python -X utf8 tests/version_flow.py` | PASS：发布/回滚内容切换与初判版本保持正确 |
+| 账号回归 | `python -X utf8 tests/auth_flow.py` | PASS 17/17 |
+| 页面与静态资源 | `python -X utf8 tests/ui_flow.py`；隔离副本启动本地预览 | PASS：页面/API 联检通过，`/qa.html` 返回 HTTP 200；Edge 截图视觉验收因 Computer Use 未获系统授权而未完成 |
+| 旧问答兼容 | `python -X utf8 backend/tools/qa_eval.py --report docs/eval/qa_eval_report.md` | PASS 50/50：旧 `POST /api/qa` 仍使用 qa_v1 离线口径，引用偏移/文号 0 错误 |
+| Python/前端语法 | `py_compile` 新旧问答模块；`node --check frontend/qa-workbench.js` | PASS |
+| 容器编排 | `docker compose config`；尝试 `docker compose build` | 编排静态校验 PASS；镜像构建 BLOCKED：Docker Desktop 引擎管道不存在，后台启动后仍未就绪；未启动容器 |
+
+本次实现：新工作台使用 `qa_context` 生成有界 QueryContext；`qa_evidence` 只读取发布快照并保存本轮 EvidenceBundle；`qa_sessions` 以 owner、request id、终态和短租约约束会话；`qa_panel` 由 EvidenceBundle 生成右侧依据；`qa_routes` 提供 Cookie 私有 API、验证后分块事件、版本原文、导出和最小 handoff。`qa.html` 改为记录、对话、依据三块，复用原视觉变量，不堆叠与当前意图无关的卡片。
+
+未执行：真实在线模型端点、人工逐条政策语义签认、学生实操、Edge 截图与窄屏视觉验收、Docker 构建/启动和公网部署。Docker 构建曾尝试但受本机引擎未启动阻塞；它们不得被本节的自动化通过结果替代。
+
+## 学生首页暖色 IP 视觉增补（2026-11-08）
+
+首页沿用现有蓝白导航与卡片体系，只在主视觉加入暖橙色“小暖”政策向导，并保留原有三项依据/兜底信息。吉祥物为本地 SVG 矢量素材，新增布局仅作用于首页；不改动政策判断、数据与页面交互。按用户要求安装并登记 `frontend-design` 与 `ai-agents-architect` Skills，均已用官方 `quick_validate.py` 校验通过。素材生成服务返回 HTTP 403，故使用项目内原创 SVG 插画实现，未改用其他图片生成方式。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 页面结构与资源路径 | 静态核对首页标签、`/static/assets/mascot-xiaonuan.svg` 与后端 `/static` 挂载 | PASS |
+| 插画文件结构 | XML 解析器检查 SVG | PASS |
+| 浏览器视觉/窄屏 | 未执行（当前会话的本地预览来源未获授权） | NOT_RUN |
+| 自动化测试 | 本轮未运行 | NOT_RUN |
+
+## 学生端栏目与任务信息层级修整（2026-11-08）
+
+根据用户截图与当前 HTML/CSS 复核后，修整学生端导航重复、首页任务行机器字段过于醒目、窄屏先展示辅助侧栏、辅助文字字号偏小、右侧说明卡片切割过多等问题。学生四页统一使用顶栏导航；首页、初判、进度页保留各自政策/流程辅助信息，不重复列出同一组页面链接。窄屏改为先显示主任务，辅助侧栏后置；首页任务卡改为“初判记录 + 分钟级时间 + 项目名摘要 + 状态”，记录标识仍由详情链接承接；首页三块保障信息合并为一个分组面板。改善局限：本轮按截图和源代码审阅，未做浏览器截图、键盘实测或自动化测试。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 需求范围 | 对照用户截图和学生端四页导航、任务列表结构 | PASS（静态审查） |
+| HTML/JS/CSS 差异 | 源码复核，检查变更只落在学生端呈现层 | PASS（静态审查） |
+| 浏览器视觉/窄屏 | 未执行 | NOT_RUN |
+| 自动化测试 | 本轮未运行 | NOT_RUN |
+
+## 首页主题组件与字号优化（2026-11-08）
+
+延续学生端蓝白配色和暖橙“小暖”IP；首页侧栏增加国家/省级/校级政策层级标签，保留健康接口提供的已核文统计；将重复入口卡改成“描述情况—核对依据—继续办理”三步路线，并为小屏改成纵向流程线。提升学生端标题、说明、任务摘要和指标标签的字号，增加聚焦态。没有新增政策数据或交互能力。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 首页交互脚本语法 | Node `--check`（仅静态语法，不运行页面） | PASS |
+| HTML、CSS 和资源差异 | 静态复核 | PASS |
+| 浏览器截图/窄屏实测 | 未执行 | NOT_RUN |
+| 自动化测试 | 本轮未运行 | NOT_RUN |
+
+## 学生工作台参考图布局设计（2026-11-09）
+
+根据用户提供的工作台截图，新增[学生首页参考图布局设计](../.scratch/student-dashboard/spec.md)，并落实学生首页布局与问答预填交接。首页改为个人/IP、本人最近办理、政策覆盖、政策助手、常用功能和政策库状态挂件；问题经同标签页 sessionStorage 一次性带入现有问答页，由学生确认后发送。不新增判等能力。项目现有“小暖”SVG 保留使用。内置图像生成服务返回 HTTP 403，新版图像未生成。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 设计依据 | 阅读学生首页、样式、问答工作台、现行项目约束及参考图 | PASS（设计范围审阅） |
+| UI/UX 指引 | `frontend-design` 设计原则；`ui-ux-pro-max` 本地设计系统与 UX 检索 | PASS（用于设计） |
+| IP 位图生成 | 内置 `image_gen` | BLOCKED：HTTP 403；沿用现有 SVG，未启动 CLI/API 备用路径 |
+| 页面代码范围 | 静态审阅 `frontend/index.html`、`frontend/style.css`、`frontend/qa-workbench.js` | PASS（已实现；未触及后端判等与权限） |
+| 浏览器截图、窄屏与键盘验收 | 尚未执行 | NOT_RUN |
+| 自动化测试 | 本轮未执行 | NOT_RUN |
+
+## 品牌与政策层级 IP 标记替换（2026-11-09）
+
+根据用户新截图，将共享页眉中的“助”字块替换为小暖头像裁切；“国／省／校”图形标记替换为现有小暖全身 SVG，并以蓝、青、暖橙底色区分层级。文字标签“国家／广东省／校级”保留，避免仅靠图像或颜色识别。替换覆盖登录、学生、问答、初判、进度、审核与管理页面的品牌标记。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 视觉参考与现有素材 | 对照用户截图，检查项目现有 `mascot-xiaonuan.svg` 和页眉/层级组件 | PASS（素材复用） |
+| IP 位图生成 | 内置 `image_gen` | BLOCKED：HTTP 403；复用项目原创 SVG，未调用 CLI/API 备用生成 |
+| 本机预览 | 打开 `http://127.0.0.1:8011/` 并读取当前页面结构 | PASS：学生工作台及“国家／广东省／校级”可见标签正常加载 |
+| 像素级截图、窄屏和键盘检查 | 尚未执行 | NOT_RUN |
+| 自动化测试 | 本轮未执行 | NOT_RUN |
+
+## 品牌与政策层级图案分化（2026-11-09）
+
+按用户新要求，将页眉“助”字块改为独立的政策书页品牌徽记；国家、省级、校级分别改为政务建筑、省域地图与定位点、校园建筑图案。四处图案各异，小暖 SVG 只留在“你的资助政策向导”挂件。内置 `image_gen` 四次请求均返回 HTTP 403，因此使用项目内原创矢量图案；没有调用 CLI/API 备用服务。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 图案数量与页面引用 | 静态核对四个独立 SVG 文件和 7 个页眉入口 | PASS（路径/引用核对） |
+| SVG 结构与本机资源路径 | XML 解析；本机 `8011/static/assets/` HTTP 请求 | PASS：4 个 SVG 均为有效 XML，均返回 HTTP 200 |
+| IP 使用边界 | 搜索前端对 `mascot-xiaonuan.svg` 的引用 | PASS：仅学生首页“你的资助政策向导”挂件引用 |
+| 图像生成 | 内置 `image_gen` | BLOCKED：4 次均 HTTP 403；改为原创 SVG，不调用 CLI/API |
+| 本机预览截图 | 8011 学生首页可见视图 | PASS：四类图案均显示且语义/构图不同，小暖只在向导挂件显示 |
+| 其他断点与键盘验收 | 尚未执行 | NOT_RUN |
+| 自动化测试 | 本轮未执行 | NOT_RUN |
+
+## AI 初判表单布局与内容图案（2026-11-09）
+
+初判页原布局的问题：大面积横幅挤占首屏；侧栏流程、表单说明和右侧说明重复；多个条件字段连续呈现，分组辨识度弱；窄屏长表单缺少快速跳转。页面已改为紧凑标题区、五类可跳转字段分段、已填写项进度提示，并为学籍、家庭经济、特殊身份、其他情况和评审类分别绘制独立 SVG 语义图案。图案属于页面导航与理解辅助，不参与判等；小暖 IP 仍仅由首页“你的资助政策向导”挂件使用。字段、授权、接口与判等行为保持原样。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 初判页加载 | 本机浏览器打开 `/triage.html` 并检查表单分组与五个跳转入口 | PASS：登录态正常，16 个字段由原字段接口填充，五组均显示 |
+| 插画资源 | 本机 `/static/assets/` HTTP 请求与 XML 解析 | PASS：5 个新增 SVG 均返回 200 且为有效 XML |
+| 页面脚本 | 提取初判页内联脚本并运行 Node `--check` | PASS |
+| 判等与接口回归 | 未运行；本轮仅改前端布局和插画 | NOT_RUN |
+| 窄屏、键盘与像素级截图审阅 | 尚未完成 | NOT_RUN |
+
+## 政策问答首屏与咨询工作台视觉调整（2026-11-09）
+
+参考用户提供的问答工作台布局，整理首屏为“历史记录、对话、当轮依据”三栏，并处理旧页首屏留白、双重滚动、输入框易落出首屏、空证据栏缺少说明、四个问题入口外观一致等问题。桌面端三栏等高，对话卡片内部滚动且输入区固定在卡片底部；窄屏先显示对话，历史与依据折叠。四个问题入口各有独立 SVG 主题图案；选择只填入输入框，需学生修改或确认后手动发送。小暖 IP 未放入本页；未新增角色形象、判等能力、政策事实或 API。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 页面预览 | 本机浏览器打开 `/qa.html`，确认登录状态、四个问题入口、输入框与依据区结构 | PASS（页面可加载；像素截图未留存） |
+| 新增 CSS 与 SVG | 本机 `/static/` 请求及 SVG XML 解析 | PASS：CSS 与 6 个 SVG 均 HTTP 200，SVG 均为有效 XML |
+| 前端脚本语法 | Node `--check frontend/qa-workbench.js` | PASS |
+| 自动化测试 | 本轮未运行 | NOT_RUN |
+| 窄屏实测、键盘逐项与真实提问链路 | 未执行 | NOT_RUN |
+
+## 办理进度工作台与状态路径视觉调整（2026-11-09）
+
+针对办理进度页横幅与状态卡重复、状态把互斥审核结果排成线性流程、任务编号过于醒目、侧栏说明重复操作入口、事件列表缺少层次等问题，调整为三阶段状态路径（初判、人工复核、申诉／改判），依据实际状态展示分支标签；增加可跳转的页面导航、可辨识的复核／申诉／材料／报送操作卡和事件留痕列表。任务版本标为“本次任务”，避免暗示历史任务使用系统当前版。将事件理由安全转义。状态、权限、接口与判等逻辑未改。不同操作与空状态采用各自语义 SVG 插画；小暖 IP 仍只在首页资助向导挂件。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 页面结构 | 本机浏览器打开 `/progress.html`，确认登录、当前任务、任务列表、三阶段状态与操作项 | PASS（页面可加载，现有任务数据可见） |
+| 页面脚本 | 提取内联脚本并运行 Node `--check` | PASS |
+| CSS 与插画资源 | 本机 `/static/` 请求及 SVG XML 解析 | PASS：1 个 CSS 与 10 个 SVG 均 HTTP 200，SVG 均有效 |
+| 自动化测试 | 本轮未运行 | NOT_RUN |
+| 窄屏、键盘逐项、真实复核／申诉提交 | 未执行 | NOT_RUN |
+
+## 公网部署当前版本（2026-11-09）
+
+按用户明确授权，将工作区当前版本部署到 `https://zhigang.suit-achieve.cn/ZizhuAgent/`。远端构建 `fund-agent:0.7`，升级 `zizhu-agent` 容器；不改 Caddy 路由和域名根站。新镜像构建上下文排除本机业务库、政策库、项目草稿与 IDE 配置。升级前用 SQLite backup API 保存远端 `app.db` 与 `policies.db`，并保留旧 `fund-agent:0.6` 镜像。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 容器部署 | SSH 检查远端 Docker 容器与镜像 | PASS：`fund-agent:0.7`，`running`／`healthy` |
+| 公网页面 | GET 子路径首页、登录、初判、问答、进度 | PASS：均 HTTP 200 |
+| 前端资源 | GET 新增布局 CSS、工作台 JS 与三页 21 个业务 SVG | PASS：均 HTTP 200 |
+| API 入口与私有访问 | GET `/api/fields`；无 Cookie GET `/api/qa/sessions` | PASS：字段 API 为 200，私人会话接口为 401 |
+| 健康与政策状态 | GET `/api/health` | PASS：离线模式，政策版本 `pv-20261107T041009`；3/19 文件已核文，`policy_verified=false` |
+| 根站隔离 | GET 域名根站并核对标题 | PASS：原站标题保持不变 |
+| 回退保护 | 检查部署前快照与旧镜像 | PASS：两库备份存在，`fund-agent:0.6` 保留 |
+| 自动化业务测试 | 本轮未运行 | NOT_RUN |

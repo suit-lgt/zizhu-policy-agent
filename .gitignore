@@ -28,3 +28,7 @@ docs/demo/
 *.tar
 *.tar.gz
 *.zip
+
+# Local IDE and reference material
+.idea/
+/UI设计参考.jpg
