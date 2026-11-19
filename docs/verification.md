@@ -514,3 +514,45 @@ NOT_RUN／已知未做：
 - 真实端点的 50 题回归、越界措辞抽样、时延／成本记录仍 NOT_RUN；本轮只验证单条链路可用。
 - 「回答语义是否支持结论」仍须资助中心在 `docs/eval/fact_support_review.csv` 逐条签认；机器校验不替代人工核验（I-7）。
 - 事实守恒校验对「不含数字／文号等标记词的新事实陈述」存在漏检盲区，以实体白名单＋人工语义签认兜底，真实端点评测量化残余漏检率。
+
+---
+
+## 政策闯关小游戏（2026-11-19）
+
+面向学生的网页端情景闯关：6 关，每关给一个学生处境，判断属于「可申请／需核实／暂不适用」哪一档，答后展示政策条文依据。定位是**练习判断口径**，不产生任何办理结论。
+
+### 变更
+- `data/game/levels.json`：6 关情景＋学生画像＋线索＋解析；**文件内不存正确答案**，答案只能由服务端算。
+- `backend/app/game_routes.py`：`GET /api/game/levels`（脱敏：不下发画像、解析、结论）、`POST /api/game/answer`（服务端调 `triage_one()` 现算，`reasons` 原样透传，含 `clause_id` 与原文偏移）。
+- `backend/app/main.py`：`include_router(game_router)` 与 `/game.html` 页面路由。
+- `frontend/game.html`／`game.css`／`game.js`：loading／intro／play／reveal／summary／failed／error 七态；信任值 3 点、答对 150 分／关、全对 +100、线索不扣分；原文卡回点 `/api/clause/{id}`。
+- 四个学生页导航与首页快捷入口加「政策闯关」；`style.css` 快捷入口由 3 列改 2 列（4 个入口成 2×2）并加 `shortcut-violet`。
+- `tests/game_flow.py`：25 项联检；`tests/smoke.py` 页面断言加 `/game.html`（65 → 66 项）。
+
+### 实测（2026-11-19；项目环境 `zizhuagent/python.exe`，Python 3.11.18）
+| 检查 | 命令／方式 | 结果 |
+|---|---|---|
+| 闯关联检 | `python -X utf8 tests/game_flow.py` | PASS 25/25：关卡数、防泄题字段、六关判定、判错仍给正确结论、依据偏移、404/400、页面与四页入口 |
+| 接口冒烟回归 | `python -X utf8 tests/smoke.py` | PASS 66/66 |
+| Provider 自测 | `python -X utf8 -m backend.app.provider --selftest` | PASS 12/12 |
+| 工作台单元与契约 | `python -X utf8 -m unittest tests.test_qa_workbench` | PASS 19/19 |
+| 前端脚本语法 | `node --check frontend/game.js` | PASS |
+| 渲染与横向溢出 | Chromium headless，390／430 两档宽度，五态截图；量 `body.scrollWidth` | PASS：等于视口宽，无超宽元素（实测 430 视口下 shell 410、card 410） |
+
+六关判定（服务端 `triage_one()` 实际输出，非人工推断）：
+| 关 | 情景 | 项目 | 结论 |
+|---|---|---|---|
+| L1 | 一年级专业第一申国奖 | GJ | 暂不适用 |
+| L2 | 认定结论未出申励志奖学金 | LZ | 需核实（缺 `income_difficulty`） |
+| L3 | 退役士兵读大一、未做认定 | GZ | 可申请（走 GZ-05 独立路径） |
+| L4 | 外省生源申广东新生资助 | XS | 暂不适用 |
+| L5 | 孤儿且特别困难申校内减免 | XN | 可申请 |
+| L6 | 已获省其他专项申新生资助 | XS | 需核实（XS-04 人工原子降级） |
+
+验证方式：先 `triage_one()` 直调确认结论，再经 HTTP 接口复验；判错用例（L6 选「可申请」）返回 `correct=false` 且 `actual=need_check`，确认游戏不会因玩家选择而改写结论。
+
+### 未做／未证明
+- 六关题面表述是否会引起误解，**未经资助中心人员签认**（见 `.scratch/policy-game/spec.md` 待确认项）。
+- 真机竖屏（iOS／Android 各一台）、真人试玩（≥5 名学生）、键盘全流程无障碍、摆摊实际场景：均 **NOT_RUN**。
+- 仅验证 Chromium 内核；Firefox／Safari 未测。
+- 本地最高分只写 `localStorage`，多设备不同步，未做账号绑定（有意为之，避免采集学生信息）。

@@ -1,6 +1,6 @@
 # 资助政策智能体
 
-状态：骨架与知识底座＋判等 CLI 已落地；A—G 七域最小闭环（三端页面＋接口＋落库＋审计＋备份脚本）已在本机跑通，65 项接口冒烟全过；3 份核心政策已核文并发布版本；Docker 镜像已构建、容器一键起并 `healthy`；C 审核端（批量初筛／两级看板／预警／报送 CSV）与 D 管理端（账号启停／导出审批／报表）已补齐；E 三态 Provider 默认离线＋50 题评测集、G 日志脱敏与统一身份占位已完成（已接 DeepSeek `deepseek-chat`，online 实测通过）；演示视频未做；0.5 已补真实账号闭环（注册／管理员审核／重置密码／本人改密，全程文字指引）、6 代理协同 trace、本地上传入库＋核文切块发布门禁，`/login.html` 可用；0.6 已补四端端口（8000 学生／8001 教师／8002 管理／8003 接口）与默认管理员 `admin`；2026-11-07 已部署公网子路径 `https://zhigang.suit-achieve.cn/ZizhuAgent/`，根站不受影响；0.7（2026-11-19，Git 标签 `v0.7.0`）已补事实守恒语言组织（ADR-0002：FactPack＋五层校验）、系统架构图重制与验证记录，spec／ADR 实施状态已校正，版本说明见 `VERSION.md`。
+状态：骨架与知识底座＋判等 CLI 已落地；A—G 七域最小闭环（三端页面＋接口＋落库＋审计＋备份脚本）已在本机跑通，65 项接口冒烟全过；3 份核心政策已核文并发布版本；Docker 镜像已构建、容器一键起并 `healthy`；C 审核端（批量初筛／两级看板／预警／报送 CSV）与 D 管理端（账号启停／导出审批／报表）已补齐；E 三态 Provider 默认离线＋50 题评测集、G 日志脱敏与统一身份占位已完成（已接 DeepSeek `deepseek-chat`，online 实测通过）；演示视频未做；0.5 已补真实账号闭环（注册／管理员审核／重置密码／本人改密，全程文字指引）、6 代理协同 trace、本地上传入库＋核文切块发布门禁，`/login.html` 可用；0.6 已补四端端口（8000 学生／8001 教师／8002 管理／8003 接口）与默认管理员 `admin`；2026-11-07 已部署公网子路径 `https://zhigang.suit-achieve.cn/ZizhuAgent/`，根站不受影响；0.7（2026-11-19，Git 标签 `v0.7.0`）已补事实守恒语言组织（ADR-0002：FactPack＋五层校验）、系统架构图重制与验证记录，spec／ADR 实施状态已校正；0.8（2026-11-19，Git 标签 `v0.8.0`）已增政策闯关情景小游戏（6 关，三档答案由引擎现算、题库不含答案），学生端扩为四个功能页、全站七页可访问；版本说明见 `VERSION.md`。
 
 目标：把学生与家庭情况翻译成"可申请哪些资助、需要什么材料、去哪里办"，每条结论附政策条款依据，人工复核兜底。
 目标用户：家庭经济困难的高职在校学生（首版唯一主用户）。
@@ -19,6 +19,7 @@ frontend/               浏览器端
   triage.html           AI 初判
   qa.html               政策咨询工作台
   progress.html         办理进度
+  game.html             政策闯关（情景判断小游戏）
   review.html           教师审核台
   admin.html            管理后台
   style.css             四端共用样式
@@ -55,9 +56,9 @@ docker-compose.yml      四端端口映射
 - `backend/app/main.py`：FastAPI 服务（A—G 接口：核文／发布／回滚／检索、初判／复核／申诉／问答／导出、看板、审计、字典、校级分档）。
 - `backend/app/db.py`：业务库 9 表、审计表禁改触发器、演示账号与材料来源种子；库路径支持 `APP_DB` 环境变量。
 - `backend/app/auth.py`：`fund_session` Cookie 会话与角色权限、越权 403；页面不再发 `X-Role`／`X-User` 身份头。
-- `frontend/index.html`／`triage.html`／`qa.html`／`progress.html`／`review.html`／`admin.html`／`style.css`：学生工作台、AI 初判、政策咨询工作台、办理进度、审核工作台、管理后台；咨询页的交互和页面样式在 `qa-workbench.js`／`qa-workbench.css`。
+- `frontend/index.html`／`triage.html`／`qa.html`／`progress.html`／`game.html`／`review.html`／`admin.html`／`style.css`：学生工作台、AI 初判、政策咨询工作台、办理进度、政策闯关、审核工作台、管理后台；咨询页的交互和页面样式在 `qa-workbench.js`／`qa-workbench.css`，闯关页在 `game.js`／`game.css`。
 - `backend/scripts/init_db.py`／`backup.py`／`restore.py`：幂等初始化、备份＋SHA256 清单、恢复＋pre-restore 快照。
-- `tests/smoke.py`：65 项接口冒烟，在 tempdir 库副本上起独立服务，不写真实库。`tests/auth_flow.py`：17 项账号闭环（注册→审核→登录→重置→改密），端口 8033。`tests/ui_flow.py`：13 项页面与上传链路联检，端口 8035。`tests/version_flow.py`：10 项版本发布／回滚内容切换验证，端口 8036。`backend/tools/fact_support.py`：当前版本原子事实支持机器核验并导出人工复核 CSV。`docs/部署与端口设计.md`：四端端口与上线检查。
+- `tests/smoke.py`：66 项接口冒烟，在 tempdir 库副本上起独立服务，不写真实库。`tests/game_flow.py`：25 项政策闯关联检（防泄题字段、六关判定、异常入参、页面与四页入口），端口 8047。`tests/auth_flow.py`：17 项账号闭环（注册→审核→登录→重置→改密），端口 8033。`tests/ui_flow.py`：13 项页面与上传链路联检，端口 8035。`tests/version_flow.py`：10 项版本发布／回滚内容切换验证，端口 8036。`backend/tools/fact_support.py`：当前版本原子事实支持机器核验并导出人工复核 CSV。`docs/部署与端口设计.md`：四端端口与上线检查。
 - `Dockerfile`／`docker-compose.yml`／`.env.example`：容器一键起（已实测构建与启动，容器 `healthy`）。
 - `data/app.db`：业务库（任务、复核事件、申诉、审计、核文、版本、材料、分档；不存姓名）。
 
@@ -88,7 +89,7 @@ docker-compose.yml      四端端口映射
 | 单例判等 | `python -X utf8 backend\tools\triage.py --input data\samples\students.json --case complete --pretty` | 项目根 | 同上 | PASS：5 个项目三档结论，每项带条款与原文偏移 |
 | 启动业务服务 | `python -X utf8 -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8010` | 项目根 | fastapi／uvicorn 已装 | PASS：`/api/health` ok、页面 200、判等 200（2026-11-06） |
 | 业务库初始化 | `python -X utf8 backend\scripts\init_db.py` | 项目根 | 可选 `APP_DB` | PASS：4 用户／16 材料／0 分档／9 任务；政策库 19 份／342 条（2026-11-06） |
-| 三端页面 | `/`、`/triage.html`、`/qa.html`、`/progress.html`、`/review.html`、`/admin.html` | 服务 8010／8011 | 服务已起 | PASS：六页 200；学生端已拆为工作台＋三个独立功能页 |
+| 三端页面 | `/`、`/triage.html`、`/qa.html`、`/progress.html`、`/game.html`、`/review.html`、`/admin.html` | 服务 8010／8011 | 服务已起 | PASS：七页 200；学生端已拆为工作台＋四个独立功能页 |
 | 接口冒烟 | `python -X utf8 tests\smoke.py` | 项目根 | fastapi／uvicorn | PASS：**65/65，exit 0**；tempdir 库副本＋8021 端口，不写真实库 |
 | 备份 | `python -X utf8 backend\scripts\backup.py` | 项目根 | 两库存在 | PASS：`backups/20261107-011327`（2 文件＋SHA256 manifest） |
 | 恢复 | `python -X utf8 backend\scripts\restore.py --from backups\<name>` | 项目根 | 有备份 | NOT_RUN：会覆盖活动库，未在运行态执行（恢复前自动存 pre-restore 快照） |
@@ -111,7 +112,7 @@ docker-compose.yml      四端端口映射
 
 已知限制：19 份政策中 **3 份核心已核文并发布**（财教〔2021〕310号 2021-12-30、财教〔2024〕181号 2024-10-25、粤财规〔2026〕1号 2026-03-01；版本 `pv-20261107T041009`），其余 16 份仍 `pending_verify`，全局 `policy_verified=false`；家庭经济困难认定办法（粤教助〔2023〕2号）与校级分档细则未入库；材料清单 16 条来源标“学校要求”、无条款来源；统一身份仍是演示态 `X-Role`／`X-User`（已加 CAS 占位，`AUTH_MODE=cas` 未配置即 501）；问答为条款关键词检索＋拒答，非语义 RAG；三态 Provider 已实现，默认离线、已接 DeepSeek `deepseek-chat`（online 实测通过）；50 题评测集已建并自动 50/50 通过，人工事实核验未做；镜像 `fund-agent:0.5` 已构建并 healthy；0.5 已补账号闭环、多智能体 trace、本地上传入库；16 份历史草稿仍未核文且仍可被检索；演示视频未拍。
 
-交付状态：A—G 最小闭环可运行并有页面截图、65 项冒烟与 17 项账号闭环；3 份核心政策已核文发布；容器一键起已实测 `healthy`；未验收；未做学校部署；未实际使用；演示视频未做；0.5 已补真实账号闭环（注册／管理员审核／重置密码／本人改密，全程文字指引）、6 代理协同 trace、本地上传入库＋核文切块发布门禁，`/login.html` 可用；0.6 已补四端端口与默认管理员；0.7 已补事实守恒语言组织与验证记录，上传前回归 Provider 12/12、工作台单元 19/19、冒烟 65/65、端到端 11/11 全部 PASS（见 `VERSION.md` 与 `docs/verification.md`）；本轮镜像构建与公网发布未记录，公网版本状态须另行核对。
+交付状态：A—G 最小闭环可运行并有页面截图、65 项冒烟与 17 项账号闭环；3 份核心政策已核文发布；容器一键起已实测 `healthy`；未验收；未做学校部署；未实际使用；演示视频未做；0.5 已补真实账号闭环（注册／管理员审核／重置密码／本人改密，全程文字指引）、6 代理协同 trace、本地上传入库＋核文切块发布门禁，`/login.html` 可用；0.6 已补四端端口与默认管理员；0.7 已补事实守恒语言组织与验证记录，上传前回归 Provider 12/12、工作台单元 19/19、冒烟 65/65、端到端 11/11 全部 PASS；0.8 已补政策闯关小游戏，回归闯关联检 25/25、冒烟 66/66、Provider 12/12、工作台单元 19/19 全部 PASS（见 `VERSION.md` 与 `docs/verification.md`）；本轮镜像构建与公网发布未记录，公网版本状态须另行核对。
 
 ## 政策咨询工作台（2026-11-08，已实现）
 

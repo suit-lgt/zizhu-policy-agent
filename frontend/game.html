@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="政策闯关：6 个学生情景，练习判断资助资格的三档口径，每题给出政策原文依据。">
+<title>政策闯关 · 资助政策智能体</title>
+<link rel="stylesheet" href="static/style.css">
+<link rel="stylesheet" href="static/game.css">
+</head>
+<body class="student-app game-page">
+<div class="app-shell game-shell">
+  <header class="topbar">
+    <a class="brand" href="index.html" style="text-decoration:none;color:inherit">
+      <div class="logo-mark"><img src="static/assets/icon-policy-assistant.svg" alt="" width="40" height="40"></div>
+      <div>
+        <div class="brand-title">资助政策智能体</div>
+        <div class="brand-sub">ZIZHU POLICY AGENT</div>
+      </div>
+    </a>
+    <nav class="top-nav">
+      <a href="index.html">学生端</a>
+      <a href="triage.html">AI 初判</a>
+      <a href="qa.html">政策问答</a>
+      <a href="progress.html">办理进度</a>
+      <a class="on" href="game.html">政策闯关</a>
+    </nav>
+    <div class="top-actions">
+      <span class="env-pill"><span class="pulse"></span>离线规则模式</span>
+    </div>
+  </header>
+
+  <main class="game-main">
+    <div class="game-hud hidden" id="hud">
+      <div class="hud-left">
+        <div class="hud-level"><b id="hud-idx">1</b><span id="hud-total">/ 6 关</span></div>
+        <div class="hud-track" role="progressbar" aria-label="闯关进度" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><i id="hud-bar"></i></div>
+      </div>
+      <div class="hud-right">
+        <div class="hud-hearts" id="hud-hearts" aria-label="信任值 3 点"></div>
+        <div class="hud-score" id="hud-score" aria-label="当前得分">0</div>
+      </div>
+    </div>
+
+    <div class="disclaimer game-disclaimer">
+      AI 初判仅供参考，最终以资助部门认定为准。本游戏只练判断口径，不产生任何办理结论。
+    </div>
+
+    <section id="stage" class="game-stage" aria-live="polite">
+      <div class="game-card game-loading">
+        <div class="loading-dot"></div>
+        <p>正在读取题库…</p>
+      </div>
+    </section>
+
+    <p class="game-foot">判断口径来自已核文发布的政策条款；每关结果由系统规则现算，不是预设答案。</p>
+  </main>
+</div>
+
+<div class="modal-mask" id="mask">
+  <div class="modal">
+    <h3 id="m-title">政策原文</h3>
+    <div class="doc" id="m-doc"></div>
+    <div class="quote" id="m-quote"></div>
+    <div class="flag" id="m-flag"></div>
+    <div class="foot">
+      <button class="btn-ghost" id="m-close" type="button">关闭</button>
+      <a class="btn-main" id="m-link" href="#" target="_blank" rel="noopener">打开来源</a>
+    </div>
+  </div>
+</div>
+
+<script src="static/game.js"></script>
+</body>
+</html>

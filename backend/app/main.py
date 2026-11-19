@@ -134,6 +134,8 @@ accounts.ensure_bootstrap_admin()
 qa.ensure_snapshot(POLICY_DB)
 from .qa_routes import router as qa_router
 app.include_router(qa_router)
+from .game_routes import router as game_router
+app.include_router(game_router)
 from .qa_sessions import recover as recover_qa_turns
 recover_qa_turns()
 
@@ -228,6 +230,11 @@ def qa_page():
 @app.get("/progress.html", response_class=HTMLResponse)
 def progress_page():
     return (STATIC / "progress.html").read_text(encoding="utf-8")
+
+
+@app.get("/game.html", response_class=HTMLResponse)
+def game_page():
+    return (STATIC / "game.html").read_text(encoding="utf-8")
 
 
 @app.get("/review.html", response_class=HTMLResponse)

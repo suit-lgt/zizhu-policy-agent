@@ -579,7 +579,7 @@ section[id^="tab-"] .small { line-height: 1.8; }
 .home-assistant-foot { display: flex; justify-content: space-between; gap: 10px; margin-top: auto; padding: 11px 17px; color: #6e829e; font-size: 12px; }
 .home-lower-grid { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(220px,1fr); gap: 14px; margin-top: 14px; }
 .home-shortcuts { min-width: 0; }
-.home-shortcut-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.home-shortcut-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
 .home-shortcut { min-width: 0; min-height: 76px; display: flex; align-items: center; gap: 9px; padding: 10px 8px; border-radius: 12px; color: inherit; text-decoration: none; background: #f8fbff; transition: background .16s ease, transform .16s ease; }
 .home-shortcut:hover { background: #f0f7ff; transform: translateY(-1px); }
 .shortcut-icon { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 10px; }
@@ -587,6 +587,7 @@ section[id^="tab-"] .small { line-height: 1.8; }
 .shortcut-blue { color: #347fc0; background: #e6f3ff; }
 .shortcut-teal { color: #258b85; background: #e5f7f3; }
 .shortcut-orange { color: #b56f30; background: #fff1e1; }
+.shortcut-violet { color: #6b4fbf; background: #f0ecff; }
 .home-shortcut > span:nth-child(2) { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .home-shortcut b { color: #234261; font-size: 13px; }
 .home-shortcut small { overflow: hidden; color: #71839a; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
@@ -601,7 +602,7 @@ section[id^="tab-"] .small { line-height: 1.8; }
 @media (max-width: 1180px) {
   .student-app .page-grid { grid-template-columns: 246px minmax(0,1fr); gap: 14px; }
   .home-lower-grid { grid-template-columns: 1fr; }
-  .home-shortcut-grid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .home-shortcut-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 @media (max-width: 900px) {
   .student-app .page-grid { grid-template-columns: minmax(0,1fr); }

@@ -320,7 +320,8 @@ def main() -> int:
         code, raw = call("GET", f"/api/export/{task_id}")
         check("导出含依据与声明", code == 200 and "依据原文" in raw and "仅供参考" in raw, f"status={code}")
 
-        for path, name in (("/", "学生端"), ("/review.html", "审核工作台"), ("/admin.html", "管理后台")):
+        for path, name in (("/", "学生端"), ("/review.html", "审核工作台"),
+                           ("/admin.html", "管理后台"), ("/game.html", "政策闯关")):
             code, raw = call("GET", path)
             check(f"页面 {path} 200", code == 200 and name in raw, f"status={code}")
 

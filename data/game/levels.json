@@ -1,0 +1,117 @@
+{
+  "version": "v1",
+  "note": "题干与画像分离。本文件不存正确答案：结论由服务端 triage_one() 现算，避免答案外泄与规则漂移。profile 字段名与取值须符合 data/fields.json。",
+  "options": [
+    { "value": "eligible", "label": "可申请", "desc": "条件对得上，可以准备材料" },
+    { "value": "need_check", "label": "需核实", "desc": "还缺认定、要评审或有例外" },
+    { "value": "not_applicable", "label": "暂不适用", "desc": "有硬门槛没满足" }
+  ],
+  "levels": [
+    {
+      "level_id": "L1",
+      "title": "专业第一，能拿国奖吗",
+      "project_code": "GJ",
+      "scenario": "小林是今年刚入学的高职一年级新生，入学成绩专业排名第一，还拿过省级技能竞赛名次。他听说国家奖学金金额最高，想第一年就申请。",
+      "question": "按小林现在的情况，国家奖学金属于哪一档？",
+      "profile": {
+        "stage": "高职专科",
+        "enrollment": "全日制在校",
+        "normal_program": true,
+        "grade": 1,
+        "income_difficulty": "已认定困难",
+        "academic": "特别优秀"
+      },
+      "hint": "先看国家奖学金的「年级」门槛，再想「特别优秀」这个结论由谁给。",
+      "teach": "国家奖学金面向二年级及以上学生评审。一年级即使成绩再好，当年也不在评审范围内。另外「特别优秀」是学校评审结论，学生不能自评。"
+    },
+    {
+      "level_id": "L2",
+      "title": "成绩优秀，认定还没下来",
+      "project_code": "LZ",
+      "scenario": "阿珍读高职二年级，全日制在校、学制正常，成绩在班里前三，平时还参加志愿服务。她想申请国家励志奖学金，但家里的家庭经济困难认定上个月才交材料，学校还没出结论。",
+      "question": "按阿珍现在的情况，国家励志奖学金属于哪一档？",
+      "profile": {
+        "stage": "高职专科",
+        "enrollment": "全日制在校",
+        "normal_program": true,
+        "grade": 2,
+        "income_difficulty": "待认定"
+      },
+      "hint": "认定结论没出来时，系统能不能替学校先认定？励志奖学金的名额又由谁定？",
+      "teach": "家庭经济困难认定是励志奖学金的前置条件，结论未出时只能给「需核实」；同时励志奖学金还须经学校评审，学生不能自评通过。"
+    },
+    {
+      "level_id": "L3",
+      "title": "退伍回来读大一",
+      "project_code": "GZ",
+      "scenario": "小陈退伍后复学，今年读高职一年级，全日制在校、学制正常。他家没有做过家庭经济困难认定，也没打算去做。同学跟他说，国家助学金跟他没关系。",
+      "question": "按小陈现在的情况，国家助学金属于哪一档？",
+      "profile": {
+        "stage": "高职专科",
+        "enrollment": "全日制在校",
+        "normal_program": true,
+        "grade": 1,
+        "veteran": true,
+        "income_difficulty": "未认定"
+      },
+      "hint": "国家助学金有两条并列的路径，退役士兵这一条需不需要困难认定？",
+      "teach": "国家助学金对退役士兵学生有单独的资格路径，不依赖家庭经济困难认定结论。所以「没做过认定」不等于「不能申请」。"
+    },
+    {
+      "level_id": "L4",
+      "title": "外省来的新生",
+      "project_code": "XS",
+      "scenario": "小周是湖南生源，今年考到广东读高职一年级，全日制在校、学制正常。家里已经完成家庭经济困难认定，他也没有拿过广东的其他专项资助。他想申请「广东省家庭经济困难大学新生资助」。",
+      "question": "按小周现在的情况，这项新生资助属于哪一档？",
+      "profile": {
+        "stage": "高职专科",
+        "enrollment": "全日制在校",
+        "normal_program": true,
+        "grade": 1,
+        "hukou_province": "其他省份",
+        "income_difficulty": "已认定困难",
+        "other_provincial_aid": false
+      },
+      "hint": "项目名称里带着「广东省」，生源限制写在哪一条？",
+      "teach": "广东省家庭经济困难大学新生资助限广东省生源，外省生源不在该项目范围内。国家层面的项目才不限生源地。"
+    },
+    {
+      "level_id": "L5",
+      "title": "孤儿学生的学费",
+      "project_code": "XN",
+      "scenario": "小许是孤儿，今年读高职一年级，全日制在校。学校已完成家庭经济困难认定，等级是「特别困难」。他听说学校的学费减免要另外申请，不确定自己够不够条件。",
+      "question": "按小许现在的情况，校内学费减免属于哪一档？",
+      "profile": {
+        "stage": "高职专科",
+        "enrollment": "全日制在校",
+        "normal_program": true,
+        "grade": 1,
+        "orphan": true,
+        "martyr_child": false,
+        "disabled": false,
+        "income_difficulty": "已认定困难",
+        "special_hardship": "特别困难"
+      },
+      "hint": "校内学费减免有三种身份可以走，走通一种就够；但困难等级还有没有要求？",
+      "teach": "校内学费减免对孤儿、烈士子女、残疾学生三种身份是「任一即可」，但同时要求家庭经济困难认定为特别困难档。具体减免比例由学校自定。"
+    },
+    {
+      "level_id": "L6",
+      "title": "已经拿过省里的专项",
+      "project_code": "XS",
+      "scenario": "小黄是广东生源，今年读高职一年级，全日制在校，已完成家庭经济困难认定，其他条件也都对得上。但他入学前已经领过省里另一项专项资助。",
+      "question": "按小黄现在的情况，这项新生资助属于哪一档？",
+      "profile": {
+        "stage": "高职专科",
+        "enrollment": "全日制在校",
+        "normal_program": true,
+        "grade": 1,
+        "hukou_province": "广东",
+        "income_difficulty": "已认定困难",
+        "other_provincial_aid": true
+      },
+      "hint": "条款用的是「原则上不重复享受」，这种表述在系统里会落到哪一档？",
+      "teach": "「原则上不再享受省财政设立的其他专项资助」属于需人工确认的条件，命中后结论降为「需核实」，由资助部门判断是否重复享受，而不是系统直接判定不能申请。"
+    }
+  ]
+}
