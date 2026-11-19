@@ -112,18 +112,35 @@ class PanelTests(EvidenceTests):
 
 
 class ProviderTests(EvidenceTests):
-    def test_rejects_unproven_claim_even_with_real_citation(self):
+    def _facts(self, bundle):
+        from backend.app import qa_evidence as e
+        return e.to_factpack(bundle)['facts']
+
+    def test_fact_consistency_rejects_fabrication(self):
         from backend.app import provider, qa_evidence as e
         bundle=e.build('助学金标准',{'project_codes':['GZ'],'intent':'benefit_standard','policy_version':'V1'},self.policy)
-        for payload in ({'evidence_ids':['V1:1'],'answer':'测试文号规定你一定领取99999元'},
-                        {'evidence_ids':['V9:1']}, {'evidence_ids':['V1:1'],'conclusion':'eligible'}):
-            self.assertFalse(provider.validate_workbench(payload,bundle)[0])
-        self.assertTrue(provider.validate_workbench({'evidence_ids':['V1:1']},bundle)[0])
+        facts=self._facts(bundle); fid=facts[0]['id']
+        # 合法：只用给定事实组织语言；原文描述性的「符合条件」不误伤
+        self.assertTrue(provider.validate_fact_consistency({'answer':'国家助学金标准每年100元。','claims':[fid]},facts)[0])
+        self.assertTrue(provider.validate_fact_consistency({'answer':'符合条件的全日制在校生，标准为每年100元。','claims':[fid]},facts)[0])
+        # 编造金额 / 文号 / 判定措辞 / 引用不存在事实 / 结构非法
+        for payload in ({'answer':'国家助学金每年99999元。','claims':[fid]},
+                        {'answer':'依据〔2020〕99号。','claims':[fid]},
+                        {'answer':'你符合条件，可申请。','claims':[fid]},
+                        {'answer':'标准100元。','claims':['V9:1']},
+                        {'evidence_ids':['V1:1']}):
+            self.assertFalse(provider.validate_fact_consistency(payload,facts)[0])
+
+    def test_online_falls_back_to_template_on_validation_failure(self):
+        from backend.app import provider, qa_evidence as e
+        bundle=e.build('助学金标准',{'project_codes':['GZ'],'intent':'benefit_standard','policy_version':'V1'},self.policy)
+        fid=self._facts(bundle)[0]['id']
         with patch.dict(os.environ,{'FUND_LLM_MODE':'online','FUND_LLM_BASE':'http://invalid','FUND_LLM_KEY':'test','FUND_LLM_MODEL':'test'}):
-            with patch.object(provider,'_call_workbench',return_value={'evidence_ids':['V1:1'],'answer':'99999元'}) as model:
+            with patch.object(provider,'_call_workbench',return_value={'answer':'国家助学金每年99999元。','claims':[fid]}) as model:
                 result=provider.compose_workbench(bundle)
         self.assertEqual(model.call_count,2);self.assertEqual(result['mode'],'offline')
         self.assertEqual(result['fallback_reason_code'],'validation_failed'); self.assertNotIn('99999',result['text'])
+
     def test_modes_and_no_unconfirmed_personal_conclusion(self):
         from backend.app import provider, qa_evidence as e
         b=e.build('助学金',{'project_codes':['GZ'],'intent':'policy_scope','policy_version':'V1','personal_guidance':True},self.policy)

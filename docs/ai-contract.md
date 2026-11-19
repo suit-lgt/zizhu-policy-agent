@@ -49,8 +49,8 @@
 
 ## 政策咨询工作台（2026-11-08，已实现）
 
-本轮增量以[功能规格](../.scratch/policy-consult-workbench/spec.md)为准。模型只消费最小必要 EvidenceBundle；资格三档只能复制程序已给定的本人结果，无 rule_result 时不得生成资格判断。输出建议为 answer＋claims(evidence_ids)＋next_action_ids；引用、免责声明、模式标签由程序拼装。
+本轮增量以[功能规格](../.scratch/policy-consult-workbench/spec.md)与 [ADR-0002](adr/0002-fact-grounded-language.md) 为准。程序确定性生成 FactPack（事实包）；模型只把给定 facts 组织成自然语言，无权检索、挑选或增删事实。资格三档只能复制程序已给定的本人结果，无 rule_result 时不得生成资格判断。输出 `{answer, claims}`，`claims` 是所用 fact_id 子集；引用、免责声明、模式标签由程序拼装。
 
 继续保留完整回答校验，正文通过后才分块展示；可以先显示已核验的面板。程序核对证据 ID、数字／单位／日期、三档一致性、动作白名单与敏感内容。命中两条不代表事实可靠，confidence 旧字段只作兼容，不作为前端可靠率。
 
-旧 `POST /api/qa` 仍读 `prompts/qa_v1.md`；工作台的在线证据选择器读 `prompts/qa_workbench_v2.md`，只允许返回本轮 `evidence_ids`。正文、资格三档、金额、材料和动作均由程序生成，因此模型不能自行输出未经核验的政策断言。在线、离线、Mock 均走相同证据契约；真实在线端点评测和人工语义支持度仍为 NOT_RUN。
+旧 `POST /api/qa` 仍读 `prompts/qa_v1.md`；工作台在线模式读 `prompts/qa_workbench_v2.md`，把 FactPack 组织成自然语言，输出过 `validate_fact_consistency`（结构／锚点／数字·文号事实守恒／结论守恒／措辞·敏感）后才采用。正文由模型组织，但事实原子必须 ⊆ 程序 facts，超集即拒并回退离线模板；资格三档、金额、材料和动作仍由程序确定。在线、离线、Mock 均走相同证据契约；真实在线端点评测和人工语义支持度仍为 NOT_RUN。

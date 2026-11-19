@@ -52,6 +52,14 @@ def check(name, condition, detail=""):
     return bool(condition)
 
 
+def hget(headers, name, default=""):
+    """HTTP 头名大小写不敏感（uvicorn 返回小写键）。"""
+    for key, value in headers.items():
+        if key.lower() == name.lower():
+            return value
+    return default
+
+
 def create_student(nickname):
     jar = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
@@ -106,7 +114,7 @@ def main():
             time.sleep(.15)
         outcomes.append(check("轮次有明确终态和面板快照", turn.get("state") in {"completed", "clarified", "refused"} and bool(turn.get("panel")), turn.get("state", "")))
         code, raw, headers = call(first, "GET", f"/api/qa/turns/{created.get('turn_id')}/events")
-        outcomes.append(check("事件流先给依据并以 done 结束", code == 200 and "event: meta" in raw and "event: done" in raw and "event: chunk" in raw and "text/event-stream" in headers.get("Content-Type", ""), str(code)))
+        outcomes.append(check("事件流先给依据并以 done 结束", code == 200 and "event: meta" in raw and "event: done" in raw and "event: chunk" in raw and "text/event-stream" in hget(headers, "Content-Type"), str(code)))
         code, _, _ = call(second, "GET", f"/api/qa/sessions/{session.get('id')}")
         outcomes.append(check("另一学生不能读取会话", code == 404, str(code)))
         evidence = (turn.get("panel") or {}).get("evidence") or []
@@ -117,7 +125,7 @@ def main():
         else:
             outcomes.append(check("原文读取绑定本轮版本", False, "没有证据"))
         code, raw, headers = call(first, "GET", f"/api/qa/sessions/{session.get('id')}/export?scope=all")
-        outcomes.append(check("全会话导出只含本人记录", code == 200 and "本人政策咨询记录" in raw and "no-store" in headers.get("Cache-Control", ""), str(code)))
+        outcomes.append(check("全会话导出只含本人记录", code == 200 and "本人政策咨询记录" in raw and "no-store" in hget(headers, "Cache-Control"), str(code)))
         code, raw, _ = call(first, "POST", f"/api/qa/turns/{turn.get('id')}/handoff", {})
         handoff = json.loads(raw) if code == 200 else {}
         outcomes.append(check("咨询到初判只创建最小引导", code == 200 and handoff.get("id") and "task_id" not in handoff, str(code)))

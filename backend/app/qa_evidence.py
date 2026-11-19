@@ -117,3 +117,46 @@ def build(question, context, policy_db=None, task=None):
             'procedure':([{'title':'核对情况与授权','description':'进入初判表单，确认学籍与认定信息。'},
                           {'title':'核对学校要求','description':'办理渠道、截止时间和材料以本校最新通知为准。'},
                           {'title':'查看进度与复核入口','description':'已有初判可在办理进度页继续操作；提交前仍需本人确认。'}] if context['intent']=='process' else [])}
+
+
+def to_factpack(bundle):
+    """EvidenceBundle → FactPack：程序把可核验事实整理成模型的唯一输入。纯函数，不落库。
+
+    ADR-0002：模型只组织语言、无权检索或挑选条款。每条 quote 事实带 anchor（version:clause_id）
+    与 span 可回点原文；数字、文号、结论三档只出现在 facts 内，模型输入即事实全集。
+    """
+    ctx = bundle.get('context') or {}
+    facts = []
+    for i, item in enumerate(bundle.get('policy_items') or []):
+        facts.append({
+            'id': item.get('evidence_id') or f'q{i}', 'kind': 'quote',
+            'text': item.get('quote', ''), 'anchor': item.get('evidence_id'),
+            'span': [item.get('char_start'), item.get('char_end')],
+            'doc_no': item.get('doc_no', ''), 'article_no': item.get('article_no', ''),
+        })
+    rule = bundle.get('rule_result')
+    if rule:
+        for i, it in enumerate(rule.get('items') or []):
+            facts.append({
+                'id': f'c{i}', 'kind': 'conclusion',
+                'project_code': it.get('project_id'), 'project_name': it.get('project_name'),
+                'conclusion': it.get('conclusion'), 'conclusion_label': it.get('conclusion_label'),
+                'missing_fields': it.get('missing_fields', []),
+            })
+    for i, m in enumerate(bundle.get('materials') or []):
+        facts.append({
+            'id': f'm{i}', 'kind': 'material', 'name': m.get('name'),
+            'project_code': m.get('project_code'), 'source_type': m.get('source_type'),
+            'required': m.get('required'), 'note': m.get('note'),
+        })
+    for i, p in enumerate(bundle.get('procedure') or []):
+        facts.append({'id': f'p{i}', 'kind': 'procedure',
+                      'title': p.get('title'), 'description': p.get('description')})
+    prohibited = [
+        '不得新增任何金额、数字、日期、文号、条款号、机构名',
+        '不得改写或新增资格三档结论（eligible/need_check/not_applicable）',
+        '不得输出「符合／不符合／通过认定」',
+        '不得复述姓名、证件号、联系方式、家庭收入金额',
+    ]
+    return {'intent': ctx.get('intent'), 'project_codes': ctx.get('project_codes', []),
+            'policy_version': ctx.get('policy_version'), 'facts': facts, 'prohibited': prohibited}

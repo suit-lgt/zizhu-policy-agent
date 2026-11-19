@@ -467,3 +467,50 @@ NOT_RUN／已知未做：
 | 根站隔离 | GET 域名根站并核对标题 | PASS：原站标题保持不变 |
 | 回退保护 | 检查部署前快照与旧镜像 | PASS：两库备份存在，`fund-agent:0.6` 保留 |
 | 自动化业务测试 | 本轮未运行 | NOT_RUN |
+
+## 系统架构图视觉修订（2026-11-09）
+
+按项目源码与当前部署记录重制架构总览，交付为可离线打开的单文件 HTML（内嵌可访问 SVG）。图面按“入口与访问 → FastAPI 应用服务 → 持久化数据”组织；区分初判、证据问答、政策治理三类能力，补明四端本地端口、公网 Caddy 子路径、Provider 离线默认状态与模型／规则／人工责任边界。删去小字密集的重复说明和绕行连线，统一浅底卡片、分层色标与文字对比度。当前仓库实际为 FastAPI＋SQLite＋多页 HTML；未将 Redis、PostgreSQL／pgvector 或真实在线模型画成已部署能力。
+
+按本轮 UI 要求，仅为中间五条主链路（Caddy→FastAPI、FastAPI→三类服务、服务层→数据层）叠加低透明度辉光，并保留清晰实色线芯与方向箭头。入口侧用户连接线、卡片边界和文字不加光效，避免降低信息辨识度。
+
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 新图位置 | `docs/资助政策智能体系统架构图.html` | PASS：单文件 HTML，内嵌 SVG，无外部资源依赖 |
+| 图片导出 | `docs/资助政策智能体系统架构图.svg`（由官方导出器从 HTML 生成） | PASS：独立 SVG 矢量图，XML 有效；5 条光晕底线与 5 条清晰箭头线均保留 |
+| Skill 自检 | `diagram-design/scripts/self_check.py` | PASS：可访问 SVG、文件完整性与画布边界检查通过 |
+| SVG 结构 | UTF-8 XML 解析 | PASS：1920 × 1160；10 个组件节点；82 个文字节点 |
+| 布局网格 | 检查组件位置与尺寸 | PASS：节点结构坐标和尺寸均为 4 的倍数 |
+| 中间链路光效 | 检查内嵌 SVG 路径与滤镜 | PASS：5 条柔光底线 + 5 条清晰箭头线；2 条入口交互线保持原样 |
+| 文字对比 | Python 按 WCAG 相对亮度计算图中文字与底色 | PASS：检查组合最低 4.59:1；深底文字 ≥9.02:1 |
+| 浏览器截图复核 | 本地 file URL 截图被 Browser URL policy 拦截 | BLOCKED |
+| 项目业务测试 | 本轮只生成架构图 | NOT_RUN |
+
+## ADR-0002 事实守恒的语言组织（2026-11-15）
+
+按 [ADR-0002](adr/0002-fact-grounded-language.md) 把工作台在线模式从「模型只返回 `evidence_ids`、正文模板拼装」升级为「模型把程序生成的 FactPack 组织成自然语言，输出过事实守恒校验」。判等、引用、结论三档仍由程序确定（I-1／I-2／I-3 不变）；模型只组织措辞，不得检索、挑选或增删事实。
+
+### 变更
+- `prompts/qa_workbench_v2.md`：组织语言契约，输入 FactPack，输出 `{answer, claims}`，逐句 `[fact_id]` 锚定。
+- `backend/app/qa_evidence.py`：新增 `to_factpack(bundle)` 纯函数（quote／conclusion／material／procedure 四类 fact，quote 带 anchor+span 可回点原文）。
+- `backend/app/provider.py`：`validate_workbench` → `validate_fact_consistency`（结构／锚点／数字·文号事实守恒／结论守恒／判定措辞·敏感 五层，措辞层收窄为「你符合／不符合／通过认定」等判定性表述，不误伤原文「符合条件」）；`_call_workbench`／`compose_workbench` 改 FactPack 链路，正文过校验才采用、失败回退离线模板；citations 由程序拼装全部 items；`max_tokens` 800→2000、answer 上限 1200→2000；`--selftest` 扩到 12 项。
+- `tests/test_qa_workbench.py`：Provider 测试更新为新契约。
+- `tests/qa_workbench_flow.py`：header 断言改为大小写不敏感（新增 `hget`），修掉 uvicorn 返回小写 header 导致的 2 项误判。
+
+### 实测（本机；项目环境 zizhuagent Python 3.11，conda base Python 3.13 亦复验）
+| 检查 | 命令 | 结果 |
+|---|---|---|
+| Provider 自测（含事实守恒负样本） | `python -X utf8 -m backend.app.provider --selftest` | PASS 12/12：合法组织语言通过；编造金额／文号／改写结论／不存在引用／判定措辞均拒绝，「符合条件」不误伤 |
+| 工作台单元与契约 | `python -X utf8 -m unittest tests.test_qa_workbench -v` | PASS 19/19 |
+| 接口冒烟回归 | `python -X utf8 tests/smoke.py` | PASS 65/65 |
+| 工作台端到端 | `python -X utf8 tests/qa_workbench_flow.py` | PASS 11/11 |
+
+### 真实在线模型实测（2026-11-15，DeepSeek `deepseek-chat`）
+- 配置：`FUND_LLM_MODE=online`、`FUND_LLM_BASE=https://api.deepseek.com`、`FUND_LLM_MODEL=deepseek-chat`（OpenAI 兼容端点），写入项目 `.env`。
+- 实测「国家助学金申请条件」：`compose_workbench` 返回 `state=completed`、`mode=online`、`fallback=None`，正文由 DeepSeek 把 FactPack 组织成自然语言，过 `validate_fact_consistency`（数字／文号 ⊆ facts、结论未改写、无判定措辞、claims 锚点合法、引导去初判核对）。
+- 期间修掉两处缺陷：①措辞层裸扫「符合」误伤原文「符合条件」→ 收窄为判定性措辞 `_JUDGMENT_RE`；②`max_tokens=800` 使长回答 JSON 被截断回退 offline → 放宽到 2000。
+
+### 未做／未证明
+- 真实端点的 50 题回归、越界措辞抽样、时延／成本记录仍 NOT_RUN；本轮只验证单条链路可用。
+- 「回答语义是否支持结论」仍须资助中心在 `docs/eval/fact_support_review.csv` 逐条签认；机器校验不替代人工核验（I-7）。
+- 事实守恒校验对「不含数字／文号等标记词的新事实陈述」存在漏检盲区，以实体白名单＋人工语义签认兜底，真实端点评测量化残余漏检率。

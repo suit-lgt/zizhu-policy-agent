@@ -155,24 +155,75 @@ def compose(question: str, hits: list[dict]) -> dict:
             "fallback": True, "error": _last["error"]}
 
 
-# Consultation protocol deliberately restricts the model to evidence selection.
-# Free-form paraphrases cannot be proven by checking document numbers alone.
+# ADR-0002：模型只把程序生成的 FactPack 组织成自然语言，不做证据选择；
+# 事实守恒校验保证数字/文号/结论只来自 facts，超集即拒，失败回退离线模板。
 WORKBENCH_PROMPT_VERSION = 'qa_workbench_v2'
 
-def validate_workbench(payload, bundle):
-    if not isinstance(payload,dict) or set(payload)!={'evidence_ids'}: return False,'unsupported_claim'
-    ids=payload['evidence_ids']; allowed={h['evidence_id'] for h in bundle['policy_items']}
-    if not isinstance(ids,list) or not ids or len(ids)>5 or any(not isinstance(x,str) or x not in allowed for x in ids):
-        return False,'invalid_reference'
-    if len(ids)!=len(set(ids)): return False,'duplicate_reference'
-    return True,'ok'
+_NUM_RE = re.compile(r'\d+(?:\.\d+)?')
+_DOCNO_RE = re.compile(r'〔\d{4}〕\d+号')
+_CONCLUSION_WORDS = ('可申请', '需核实', '暂不适用')
+_SENSITIVE_RE = re.compile(r'(1[3-9]\d{9}|\d{17}[\dXx]|\d{16,19})')
+# 判定性措辞：I-2 拦截「判定个人」的表述；原文的「符合条件」这类无人称描述不在拦截范围。
+_JUDGMENT_RE = re.compile(r'(不符合|通过认定|(?:你|您|我|本人|该生)\s*(?:不)?符合)')
 
-def _call_workbench(bundle):
+
+def _fact_numbers(facts):
+    nums = set()
+    for f in facts:
+        nums |= set(_NUM_RE.findall(json.dumps(f, ensure_ascii=False)))
+    return nums
+
+
+def _fact_docnos(facts):
+    docnos = set()
+    for f in facts:
+        docnos |= set(_DOCNO_RE.findall(json.dumps(f, ensure_ascii=False)))
+    return docnos
+
+
+def _fact_conclusion_words(facts):
+    words = set()
+    for f in facts:
+        text = json.dumps(f, ensure_ascii=False)
+        if f.get('kind') == 'conclusion' and f.get('conclusion_label'):
+            words.add(f['conclusion_label'])
+        for w in _CONCLUSION_WORDS:
+            if w in text:
+                words.add(w)
+    return words
+
+
+def validate_fact_consistency(payload, facts):
+    """事实守恒校验：模型输出的事实原子必须 ⊆ 程序 facts。五层，任一失败即拒。"""
+    if not isinstance(payload, dict) or set(payload) != {'answer', 'claims'}:
+        return False, 'unsupported_claim'
+    answer = payload.get('answer'); claims = payload.get('claims')
+    if not isinstance(answer, str) or not (1 <= len(answer.strip()) <= 2000):
+        return False, 'invalid_answer'
+    allowed = {f['id'] for f in facts}
+    if not isinstance(claims, list) or not claims or \
+            any(not isinstance(c, str) or c not in allowed for c in claims):
+        return False, 'invalid_reference'
+    if len(claims) != len(set(claims)):
+        return False, 'duplicate_reference'
+    if not (set(_NUM_RE.findall(answer)) <= _fact_numbers(facts)):
+        return False, 'fabricated_number'
+    if not (set(_DOCNO_RE.findall(answer)) <= _fact_docnos(facts)):
+        return False, 'fabricated_docno'
+    for word in _CONCLUSION_WORDS:
+        if word in answer and word not in _fact_conclusion_words(facts):
+            return False, 'conclusion_mismatch'
+    if _JUDGMENT_RE.search(answer):
+        return False, 'forbidden_judgment'
+    if _SENSITIVE_RE.search(answer):
+        return False, 'sensitive_leak'
+    return True, 'ok'
+
+
+def _call_workbench(factpack):
     prompt=(ROOT/'prompts/qa_workbench_v2.md').read_text(encoding='utf-8')
-    minimal={'intent':bundle['context']['intent'],'question':bundle['context']['sanitized_question'],
-             'evidence':[{'id':h['evidence_id'],'text':h['quote']} for h in bundle['policy_items']]}
-    payload={'model':model_name(),'temperature':0,'max_tokens':250,'messages':[
-        {'role':'system','content':prompt},{'role':'user','content':json.dumps(minimal,ensure_ascii=False)}]}
+    payload={'model':model_name(),'temperature':0,'max_tokens':2000,'messages':[
+        {'role':'system','content':prompt},{'role':'user','content':json.dumps(factpack,ensure_ascii=False)}]}
     req=urllib.request.Request(base_url()+'/chat/completions',data=json.dumps(payload).encode(),
         headers={'Content-Type':'application/json','Authorization':f"Bearer {os.environ.get('FUND_LLM_KEY','')}"},method='POST')
     timeout=max(1,min(float(os.environ.get('FUND_LLM_TIMEOUT','20')),25))
@@ -182,19 +233,22 @@ def _call_workbench(bundle):
     text=re.sub(r'^```(?:json)?|```$','',text,flags=re.M).strip()
     return json.loads(text)
 
+
 def compose_workbench(bundle):
     from .qa_context import PROJECTS
+    from .qa_evidence import to_factpack
     ctx=bundle['context']; items=bundle['policy_items']
-    selected=[x['evidence_id'] for x in items[:3]]
+    factpack=to_factpack(bundle)
     requested=mode(); actual='mock' if requested=='mock' else 'offline'; failure=None
-    if requested=='online' and items:
+    model_text=None
+    if requested=='online' and factpack['facts']:
         if not configured(): failure='missing_configuration'
         else:
             for _ in range(2):
                 try:
-                    payload=_call_workbench(bundle)
-                    if validate_workbench(payload,bundle)[0]:
-                        selected=payload['evidence_ids'];actual='online';failure=None;break
+                    payload=_call_workbench(factpack)
+                    if validate_fact_consistency(payload,factpack['facts'])[0]:
+                        model_text=payload['answer']; actual='online'; failure=None; break
                     failure='validation_failed'
                 except Exception: failure='provider_unavailable'
     topic='、'.join(PROJECTS[c] for c in ctx['project_codes']) or '该项目'
@@ -206,18 +260,21 @@ def compose_workbench(bundle):
         state='refused'
     else:
         state='completed'
-        messages={
-            'policy_scope':f'关于{topic}，已整理本版的申请对象与条件原文。请先核对条款，再在初判表单确认本人学籍与认定信息；聊天不会直接判定个人资格。',
-            'benefit_standard':f'关于{topic}，请按右侧原文区分资助标准、适用条件和学校具体档位。政策中的平均值或区间不能直接作为个人实际领取金额；学校档位与叠加规则缺少依据时仍需核实。',
-            'materials':f'已整理{topic}的办理准备清单。清单逐项标明来源：有原文支持的政策材料可以核对引用，其余通用配置需要学校确认。请勿在聊天中上传证件或账户信息。',
-            'process':f'{topic}可按右侧步骤准备：先核对信息，再确认学校要求，已有任务可进入办理进度。学校办理时限与入口未核实前，系统不会替你推定或提交申请。',
-            'review_progress':'已调取本人任务快照。右侧显示当时的程序结果、待补信息及当前任务状态；重新初判与提交复核仍需你确认。'}
-        text=messages[ctx['intent']]
-        if ctx['intent']=='materials' and not bundle['materials']: text='当前没有可核对的本校材料清单。已有政策依据可在右侧查看；具体材料请向学校资助中心确认。'
+        if model_text is not None:
+            text=model_text
+        else:
+            messages={
+                'policy_scope':f'关于{topic}，已整理本版的申请对象与条件原文。请先核对条款，再在初判表单确认本人学籍与认定信息；聊天不会直接判定个人资格。',
+                'benefit_standard':f'关于{topic}，请按右侧原文区分资助标准、适用条件和学校具体档位。政策中的平均值或区间不能直接作为个人实际领取金额；学校档位与叠加规则缺少依据时仍需核实。',
+                'materials':f'已整理{topic}的办理准备清单。清单逐项标明来源：有原文支持的政策材料可以核对引用，其余通用配置需要学校确认。请勿在聊天中上传证件或账户信息。',
+                'process':f'{topic}可按右侧步骤准备：先核对信息，再确认学校要求，已有任务可进入办理进度。学校办理时限与入口未核实前，系统不会替你推定或提交申请。',
+                'review_progress':'已调取本人任务快照。右侧显示当时的程序结果、待补信息及当前任务状态；重新初判与提交复核仍需你确认。'}
+            text=messages[ctx['intent']]
+            if ctx['intent']=='materials' and not bundle['materials']: text='当前没有可核对的本校材料清单。已有政策依据可在右侧查看；具体材料请向学校资助中心确认。'
     # Citations, numbers, status and full quotes only come from the evidence, never model prose.
     citations=[{'evidence_id':h['evidence_id'],'version_id':h['version_id'],'clause_id':h['clause_id'],
                 'doc_no':h['doc_no'],'article_no':h['article_no'],'span':[h['char_start'],h['char_end']]}
-               for h in items if h['evidence_id'] in selected]
+               for h in items]
     return {'text':text,'citations':citations,'state':state,'mode':actual,'fallback_reason_code':failure,
             'prompt_version':WORKBENCH_PROMPT_VERSION}
 
@@ -242,8 +299,24 @@ def _selftest() -> int:
     fallback_ok = res["mode"] == "offline" and res["fallback"] is True and "粤财规" in res["text"]
     print(("PASS" if fallback_ok else "FAIL"), "在线缺配置回退离线")
     ok += 1 if fallback_ok else 0
-    print(f"{ok}/5 PASS")
-    return 0 if ok == 5 else 1
+    facts = [
+        {'id': 'V:1', 'kind': 'quote', 'text': '国家助学金每年3700元。', 'doc_no': '粤财规〔2026〕1号', 'article_no': '第十一条'},
+        {'id': 'c0', 'kind': 'conclusion', 'project_name': '国家助学金', 'conclusion_label': '需核实'},
+    ]
+    fc = [
+        ("事实守恒-合法组织语言", validate_fact_consistency({'answer': '国家助学金标准为每年3700元，本人结论需核实。', 'claims': ['V:1', 'c0']}, facts)[0] is True),
+        ("事实守恒-拒编造金额", validate_fact_consistency({'answer': '国家助学金每年99999元。', 'claims': ['V:1']}, facts)[0] is False),
+        ("事实守恒-拒编造文号", validate_fact_consistency({'answer': '依据粤财规〔2024〕88号。', 'claims': ['V:1']}, facts)[0] is False),
+        ("事实守恒-拒改写结论", validate_fact_consistency({'answer': '你可申请国家助学金。', 'claims': ['V:1']}, facts)[0] is False),
+        ("事实守恒-拒不存在引用", validate_fact_consistency({'answer': '标准3700元。', 'claims': ['V:99']}, facts)[0] is False),
+        ("事实守恒-不误伤原文符合条件", validate_fact_consistency({'answer': '符合条件的全日制在校生，标准为每年3700元。', 'claims': ['V:1']}, facts)[0] is True),
+        ("事实守恒-拒判定措辞你符合", validate_fact_consistency({'answer': '你符合申请条件。', 'claims': ['V:1']}, facts)[0] is False),
+    ]
+    for name, passed in fc:
+        print(("PASS" if passed else "FAIL"), name)
+        ok += 1 if passed else 0
+    print(f"{ok}/12 PASS")
+    return 0 if ok == 12 else 1
 
 
 if __name__ == "__main__":

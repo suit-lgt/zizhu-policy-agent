@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>资助政策智能体｜系统架构</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f3f6fb;
+      --ink: #172b49;
+      --muted: #526987;
+      --rule: #d6e1ef;
+      --blue: #3263c9;
+      --teal: #16888b;
+      --amber: #a86613;
+      --green: #237a5c;
+      font-family: "Geist", "Microsoft YaHei", "Noto Sans SC", "PingFang SC", sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    .page { width: min(100%, 2048px); margin: 0 auto; padding: 34px 40px 24px; }
+    .masthead {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 32px;
+      padding: 2px 0 24px; border-bottom: 1px solid var(--rule);
+    }
+    .identity { min-width: 0; }
+    .eyebrow { margin: 0 0 10px; color: #365fb2; font-size: 13px; font-weight: 700; letter-spacing: .08em; }
+    h1 { margin: 0; font-size: clamp(30px, 2.5vw, 46px); line-height: 1.18; letter-spacing: -.035em; font-weight: 750; }
+    .subtitle { margin: 10px 0 0; color: var(--muted); font-size: 16px; line-height: 1.6; }
+    .meta { display: flex; gap: 28px; padding-bottom: 5px; flex: 0 0 auto; }
+    .meta-item { min-width: 150px; border-left: 2px solid #7aa6e8; padding-left: 12px; }
+    .meta-label { display: block; margin-bottom: 5px; color: var(--muted); font-size: 12px; }
+    .meta-value { display: block; font-size: 15px; font-weight: 700; }
+    .diagram-container { width: 100%; min-width: 0; margin-top: 22px; overflow-x: auto; }
+    svg { display: block; width: 100%; min-width: 1920px; height: auto; }
+    .caption { display: flex; justify-content: space-between; gap: 24px; margin-top: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .caption p { margin: 0; }
+    .caption strong { color: var(--ink); }
+    @media (max-width: 900px) {
+      .page { padding: 24px 18px 18px; }
+      .masthead { display: block; }
+      .meta { margin-top: 22px; flex-wrap: wrap; gap: 16px 24px; }
+      .caption { display: block; }
+      .caption p + p { margin-top: 6px; }
+    }
+    @media print {
+      body { background: #fff; }
+      .page { width: 100%; padding: 16px; }
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+      .masthead { padding-bottom: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div class="identity">
+        <p class="eyebrow">资助政策智能体　/　系统架构　/　2026</p>
+        <h1>从政策原文，到可追溯的办理结果</h1>
+        <p class="subtitle">规则负责判等　·　程序负责证据　·　人工负责复核　·　模型默认离线</p>
+      </div>
+      <div class="meta" aria-label="架构基线">
+        <div class="meta-item"><span class="meta-label">运行基线</span><span class="meta-value">FastAPI · SQLite</span></div>
+        <div class="meta-item"><span class="meta-label">页面形态</span><span class="meta-value">多页 HTML · Docker</span></div>
+        <div class="meta-item"><span class="meta-label">公网入口</span><span class="meta-value">Caddy · 子路径</span></div>
+      </div>
+    </header>
+
+    <figure style="margin:0">
+      <div class="diagram-container">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1160" role="img" aria-labelledby="fund-architecture-title fund-architecture-desc">
+          <title id="fund-architecture-title">资助政策智能体系统架构</title>
+          <desc id="fund-architecture-desc">展示学生、教师和资助管理员经过多页前端与 Caddy 访问 FastAPI，进入资格初判、政策问答和政策治理服务，并使用业务 SQLite、政策 SQLite 与文件备份；侧栏说明规则、引用、人工复核和模型的责任边界。</desc>
+          <defs>
+            <marker id="fund-arrow" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#6982a4"/>
+            </marker>
+            <marker id="fund-arrow-blue" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#3263c9"/>
+            </marker>
+            <marker id="fund-arrow-teal" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#137b7d"/>
+            </marker>
+            <marker id="fund-arrow-amber" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#a86613"/>
+            </marker>
+            <marker id="fund-arrow-green" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#237a5c"/>
+            </marker>
+            <filter id="fund-line-glow" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
+              <feGaussianBlur stdDeviation="4"/>
+            </filter>
+            <style>
+              .zone { fill:#f8fafd; stroke:#d6e1ef; stroke-width:1.4; }
+              .zone-title { font:600 15px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#365577; }
+              .node { fill:#fff; stroke:#d6e1ef; stroke-width:1.4; }
+              .node-title { font:700 19px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#172b49; }
+              .node-body { font:400 14px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#405a7c; }
+              .node-note { font:500 12px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#526987; }
+              .label { font:700 12px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; letter-spacing:.02em; }
+              .section-title { font:700 17px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#172b49; }
+              .side-title { font:700 22px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#172b49; }
+              .side-head { font:700 16px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#1c3457; }
+              .side-body { font:400 14px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#526987; }
+              .arrow { fill:none; stroke:#6982a4; stroke-width:1.8; marker-end:url(#fund-arrow); }
+              .arrow-blue { fill:none; stroke:#3263c9; stroke-width:2; marker-end:url(#fund-arrow-blue); }
+              .glow-halo { fill:none; stroke-width:7; stroke-linecap:round; opacity:.42; filter:url(#fund-line-glow); }
+              .glow-halo.blue { stroke:#82a9fb; }
+              .glow-halo.teal { stroke:#71c1bd; }
+              .glow-halo.amber { stroke:#e3b56f; }
+              .glow-halo.green { stroke:#78ba98; }
+              .flow-line { fill:none; stroke-width:2; stroke-linecap:round; }
+              .flow-line.blue { stroke:#3263c9; marker-end:url(#fund-arrow-blue); }
+              .flow-line.teal { stroke:#137b7d; marker-end:url(#fund-arrow-teal); }
+              .flow-line.amber { stroke:#a86613; marker-end:url(#fund-arrow-amber); }
+              .flow-line.green { stroke:#237a5c; marker-end:url(#fund-arrow-green); }
+              .divider { stroke:#dce5f0; stroke-width:1; }
+              .tag { font:600 12px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; }
+              .legend { font:500 13px "Geist","Microsoft YaHei","Noto Sans SC","PingFang SC",sans-serif; fill:#405a7c; }
+            </style>
+          </defs>
+
+          <!-- 入口层 -->
+          <rect class="zone" x="40" y="40" width="1400" height="216" rx="10"/>
+          <text class="zone-title" x="64" y="68">入口与访问</text>
+
+          <!-- 箭头先于节点绘制 -->
+          <path class="arrow" d="M456 152 H576"/>
+          <path class="arrow" d="M896 152 H1016"/>
+
+          <rect class="node" x="136" y="80" width="320" height="144" rx="8"/>
+          <rect x="136" y="80" width="5" height="144" rx="2.5" fill="#3263c9"/>
+          <text class="label" x="160" y="106" fill="#3263c9">使用者</text>
+          <text class="node-title" x="160" y="138">三类业务角色</text>
+          <text class="node-body" x="160" y="166">学生 · 教师／审核</text>
+          <text class="node-body" x="160" y="190">资助管理员 · 审计员</text>
+
+          <rect class="node" x="576" y="80" width="320" height="144" rx="8"/>
+          <rect x="576" y="80" width="5" height="144" rx="2.5" fill="#3263c9"/>
+          <text class="label" x="600" y="106" fill="#3263c9">浏览器端</text>
+          <text class="node-title" x="600" y="138">多页 HTML 工作台</text>
+          <text class="node-body" x="600" y="166">学生：工作台 · 初判 · 问答 · 进度</text>
+          <text class="node-body" x="600" y="190">教师审核台 · 资助管理后台</text>
+
+          <rect class="node" x="1016" y="80" width="320" height="144" rx="8"/>
+          <rect x="1016" y="80" width="5" height="144" rx="2.5" fill="#3263c9"/>
+          <text class="label" x="1040" y="106" fill="#3263c9">公网反向代理</text>
+          <text class="node-title" x="1040" y="138">Caddy · HTTPS</text>
+          <text class="node-body" x="1040" y="166">/ZizhuAgent/*</text>
+          <text class="node-note" x="1040" y="190">→ 127.0.0.1:9100</text>
+
+          <!-- 应用运行区 -->
+          <rect class="zone" x="40" y="288" width="1400" height="488" rx="10"/>
+          <text class="zone-title" x="64" y="316">应用运行　/　Docker Compose · 单容器 · FastAPI</text>
+
+          <path class="glow-halo blue" d="M1176 224 V344"/>
+          <path class="flow-line blue" d="M1176 224 V344"/>
+
+          <rect class="node" x="64" y="344" width="1352" height="96" rx="8"/>
+          <rect x="64" y="344" width="6" height="96" rx="3" fill="#3263c9"/>
+          <text class="label" x="92" y="372" fill="#3263c9">服务端</text>
+          <text class="node-title" x="92" y="405">FastAPI 应用容器</text>
+          <text class="node-body" x="442" y="385">容器内 :8000　·　FastAPI 提供页面与 /api 路由</text>
+          <text class="node-note" x="442" y="411">Cookie fund_session　·　服务端按角色限制</text>
+          <text class="node-note" x="1000" y="385">本地端口：8000 学生 · 8001 审核</text>
+          <text class="node-note" x="1000" y="411">8002 管理 · 8003 API</text>
+
+          <!-- FastAPI 到三个业务能力的独立垂直连接 -->
+          <path class="glow-halo blue" d="M296 440 V488"/>
+          <path class="flow-line blue" d="M296 440 V488"/>
+          <path class="glow-halo teal" d="M736 440 V488"/>
+          <path class="flow-line teal" d="M736 440 V488"/>
+          <path class="glow-halo amber" d="M1176 440 V488"/>
+          <path class="flow-line amber" d="M1176 440 V488"/>
+
+          <rect class="node" x="136" y="488" width="320" height="240" rx="8"/>
+          <rect x="136" y="488" width="320" height="5" rx="2.5" fill="#3263c9"/>
+          <text class="label" x="160" y="520" fill="#3263c9">规则判等</text>
+          <text class="node-title" x="160" y="553">AI 初判与办理任务</text>
+          <text class="node-body" x="160" y="585">6 个确定性代理 · 每步留 trace</text>
+          <line class="divider" x1="160" y1="603" x2="432" y2="603"/>
+          <text class="node-body" x="160" y="632">原子条件由代码判等，结果分三档；</text>
+          <text class="node-body" x="160" y="656">引用核验后锁定版本与原文位置。</text>
+          <text class="node-note" x="160" y="704">可申请　·　需核实　·　暂不适用</text>
+
+          <rect class="node" x="576" y="488" width="320" height="240" rx="8"/>
+          <rect x="576" y="488" width="320" height="5" rx="2.5" fill="#16888b"/>
+          <text class="label" x="600" y="520" fill="#137b7d">证据问答</text>
+          <text class="node-title" x="600" y="553">政策咨询工作台</text>
+          <text class="node-body" x="600" y="585">QueryContext → EvidenceBundle</text>
+          <line class="divider" x1="600" y1="603" x2="872" y2="603"/>
+          <text class="node-body" x="600" y="632">读取发布快照；回答与引用先校验，</text>
+          <text class="node-body" x="600" y="656">再分块展示；轮次持久化并可恢复。</text>
+          <text class="node-note" x="600" y="704">Provider 默认离线 · 在线端点未接</text>
+
+          <rect class="node" x="1016" y="488" width="320" height="240" rx="8"/>
+          <rect x="1016" y="488" width="320" height="5" rx="2.5" fill="#b8771c"/>
+          <text class="label" x="1040" y="520" fill="#a86613">政策治理</text>
+          <text class="node-title" x="1040" y="553">管理与人工审核</text>
+          <text class="node-body" x="1040" y="585">政策采集 · 核文 · 发布与回滚</text>
+          <line class="divider" x1="1040" y1="603" x2="1312" y2="603"/>
+          <text class="node-body" x="1040" y="632">教师复核与申诉改判由人工完成；</text>
+          <text class="node-body" x="1040" y="656">管理员维护账号、版本与导出审批。</text>
+          <text class="node-note" x="1040" y="704">审计只追加 · 原结论保留</text>
+
+          <!-- 服务层到数据层：整体持久化关系；具体读写见各模块与数据说明 -->
+          <!-- 持久化区 -->
+          <rect class="zone" x="40" y="812" width="1400" height="228" rx="10"/>
+          <path class="glow-halo green" d="M732 730 V838"/>
+          <path class="flow-line green" d="M732 730 V838"/>
+          <text class="zone-title" x="64" y="842">持久化数据　/　SQLite 与本地文件</text>
+
+          <rect class="node" x="136" y="868" width="320" height="144" rx="8"/>
+          <rect x="136" y="868" width="5" height="144" rx="2.5" fill="#237a5c"/>
+          <text class="label" x="160" y="897" fill="#237a5c">业务库</text>
+          <text class="node-title" x="160" y="928">data/app.db</text>
+          <text class="node-body" x="160" y="956">账号 · 初判 · 问答会话与轮次</text>
+          <text class="node-body" x="160" y="980">复核申诉 · 只追加审计</text>
+
+          <rect class="node" x="576" y="868" width="320" height="144" rx="8"/>
+          <rect x="576" y="868" width="5" height="144" rx="2.5" fill="#237a5c"/>
+          <text class="label" x="600" y="897" fill="#237a5c">政策库</text>
+          <text class="node-title" x="600" y="928">data/staging/policies.db</text>
+          <text class="node-body" x="600" y="956">政策 · 条款 · 原子 · 发布快照</text>
+          <text class="node-body" x="600" y="980">初判与问答读取版本快照</text>
+
+          <rect class="node" x="1016" y="868" width="320" height="144" rx="8"/>
+          <rect x="1016" y="868" width="5" height="144" rx="2.5" fill="#237a5c"/>
+          <text class="label" x="1040" y="897" fill="#237a5c">文件与备份</text>
+          <text class="node-title" x="1040" y="928">原文 · 上传 · 备份</text>
+          <text class="node-body" x="1040" y="956">data/staging/raw · data/uploads</text>
+          <text class="node-body" x="1040" y="980">backups/ · SHA-256 清单</text>
+
+          <!-- 可信边界侧栏 -->
+          <rect x="1480" y="40" width="400" height="1000" rx="10" fill="#fff" stroke="#d6e1ef" stroke-width="1.4"/>
+          <rect x="1480" y="40" width="400" height="8" rx="4" fill="#1d427d"/>
+          <text class="label" x="1512" y="74" fill="#3263c9">可信边界</text>
+          <text class="side-title" x="1512" y="110">每条结论都能说明</text>
+          <text class="side-body" x="1512" y="140">谁负责、依据何在、如何复核</text>
+          <line class="divider" x1="1512" y1="163" x2="1848" y2="163"/>
+
+          <circle cx="1532" cy="204" r="15" fill="#edf3ff"/>
+          <text class="tag" x="1532" y="209" text-anchor="middle" fill="#3263c9">1</text>
+          <text class="side-head" x="1560" y="202">程序给出三档结论</text>
+          <text class="side-body" x="1560" y="229">模型不判定，也不改写规则结果。</text>
+          <line class="divider" x1="1512" y1="256" x2="1848" y2="256"/>
+
+          <circle cx="1532" cy="296" r="15" fill="#eaf6f5"/>
+          <text class="tag" x="1532" y="301" text-anchor="middle" fill="#16888b">2</text>
+          <text class="side-head" x="1560" y="294">引用由系统拼装</text>
+          <text class="side-body" x="1560" y="321">版本、条款与原文位置可回点。</text>
+          <line class="divider" x1="1512" y1="348" x2="1848" y2="348"/>
+
+          <circle cx="1532" cy="388" r="15" fill="#fff5e8"/>
+          <text class="tag" x="1532" y="393" text-anchor="middle" fill="#a86613">3</text>
+          <text class="side-head" x="1560" y="386">人工负责复核与改判</text>
+          <text class="side-body" x="1560" y="413">申诉理由、审核动作与旧结论留痕。</text>
+          <line class="divider" x1="1512" y1="440" x2="1848" y2="440"/>
+
+          <circle cx="1532" cy="480" r="15" fill="#edf6f1"/>
+          <text class="tag" x="1532" y="485" text-anchor="middle" fill="#237a5c">4</text>
+          <text class="side-head" x="1560" y="478">数据按用途分库</text>
+          <text class="side-body" x="1560" y="505">业务数据与政策版本快照分离。</text>
+
+          <rect x="1512" y="560" width="336" height="188" rx="8" fill="#f3f6fb" stroke="#dce5f0"/>
+          <text class="label" x="1536" y="592" fill="#3263c9">当前能力边界</text>
+          <text class="side-head" x="1536" y="626">模型默认离线</text>
+          <text class="side-body" x="1536" y="655">在线 Provider 已实现回退路径，</text>
+          <text class="side-body" x="1536" y="679">但真实模型端点尚未连接。</text>
+          <text class="side-body" x="1536" y="716">当前不部署 Redis / PostgreSQL / pgvector。</text>
+
+          <rect x="1512" y="780" width="336" height="206" rx="8" fill="#1d3d70"/>
+          <text x="1536" y="816" font-family="Geist,Microsoft YaHei,Noto Sans SC,PingFang SC,sans-serif" font-size="14" font-weight="700" fill="#ffffff">结果使用边界</text>
+          <text x="1536" y="852" font-family="Geist,Microsoft YaHei,Noto Sans SC,PingFang SC,sans-serif" font-size="13" fill="#e3ecf8">AI 初判仅供参考。</text>
+          <text x="1536" y="878" font-family="Geist,Microsoft YaHei,Noto Sans SC,PingFang SC,sans-serif" font-size="13" fill="#e3ecf8">最终以资助部门认定为准。</text>
+          <line x1="1536" y1="906" x2="1824" y2="906" stroke="#7891b5" stroke-width="1"/>
+          <text x="1536" y="940" font-family="Geist,Microsoft YaHei,Noto Sans SC,PingFang SC,sans-serif" font-size="12" fill="#e3ecf8">系统提供政策解释与办理指引，</text>
+          <text x="1536" y="964" font-family="Geist,Microsoft YaHei,Noto Sans SC,PingFang SC,sans-serif" font-size="12" fill="#e3ecf8">不替代学校审核或资金发放。</text>
+
+          <!-- 底部色彩图例与来源 -->
+          <line x1="40" y1="1070" x2="1880" y2="1070" stroke="#d1ddeb" stroke-width="1.2"/>
+          <text class="legend" x="64" y="1104" font-weight="700">图例</text>
+          <rect x="122" y="1092" width="12" height="12" rx="2" fill="#3263c9"/>
+          <text class="legend" x="144" y="1104">确定性业务</text>
+          <rect x="286" y="1092" width="12" height="12" rx="2" fill="#16888b"/>
+          <text class="legend" x="308" y="1104">证据与问答</text>
+          <rect x="450" y="1092" width="12" height="12" rx="2" fill="#b8771c"/>
+          <text class="legend" x="472" y="1104">政策治理</text>
+          <rect x="588" y="1092" width="12" height="12" rx="2" fill="#237a5c"/>
+          <text class="legend" x="610" y="1104">持久化数据</text>
+          <text class="legend" x="1880" y="1104" text-anchor="end">依据：当前仓库实现与部署记录　·　2026-11-09</text>
+        </svg>
+      </div>
+      <figcaption class="caption">
+        <p><strong>阅读顺序：</strong>访问入口 → 应用服务 → 持久化数据；右侧为责任与能力边界。</p>
+        <p>此图描述当前实现。真实在线模型、Redis、PostgreSQL 与 pgvector 未接入。</p>
+      </figcaption>
+    </figure>
+  </main>
+</body>
+</html>
