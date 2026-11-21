@@ -51,7 +51,7 @@ def main() -> int:
     shutil.copy(ROOT / "data" / "app.db", tmp / "app.db")
     shutil.copy(ROOT / "data" / "staging" / "policies.db", tmp / "policies.db")
     env = dict(os.environ, APP_DB=str(tmp / "app.db"), POLICY_DB=str(tmp / "policies.db"),
-               LOG_LEVEL="WARNING", AUTH_MODE="dev")
+               LOG_LEVEL="WARNING", AUTH_MODE="dev", FUND_LLM_MODE="offline")
     proc = subprocess.Popen([sys.executable, "-X", "utf8", "-m", "uvicorn", "backend.app.main:app",
                              "--host", "127.0.0.1", "--port", str(PORT)],
                             cwd=str(ROOT), env=env, stdout=subprocess.DEVNULL,

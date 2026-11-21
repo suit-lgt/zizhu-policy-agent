@@ -109,4 +109,48 @@
   .starter-grid button { min-height: 62px; }
   .dialogue-tools button { padding: 5px; }
 }
+/* Delivery-state semantics: stage announcements, terminal notes, readable small text. */
+.qa-status {
+  margin: 0 16px; padding: 7px 12px; border: 1px solid #cddcf5; border-radius: 10px;
+  background: #f2f7ff; color: #234c8f; font-size: 12px; line-height: 1.5;
+}
+[hidden].qa-status { display: none; }
+.terminal-note {
+  margin: 0 0 7px; padding: 6px 9px; border-left: 3px solid #e0a33a; border-radius: 4px;
+  background: #fff8e9; color: #6a4a12; font-size: 12px; line-height: 1.55;
+}
+.consult-page { --muted-2: #65799a; }
+.consult-page .starter-heading span, .consult-page .history-foot, .consult-page .hint { color: #5c7091; }
+.consult-composer textarea::placeholder { color: #5f7291; opacity: 1; }
+/* 原始提问：随轮次落库，刷新后由会话详情恢复；支持编辑并显式保存。 */
+.raw-echo { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; padding: 5px 8px; border-left: 3px solid #9dbcf0; border-radius: 4px; background: #f4f8ff; color: #35527d; font-size: 12px; line-height: 1.5; }
+.raw-echo b { font-weight: 650; }
+.raw-echo-text { overflow-wrap: anywhere; }
+.raw-echo small { flex: 1 1 100%; margin-top: 1px; color: #5c7091; font-size: 10px; }
+.raw-echo-edit { padding: 2px 7px; font-size: 10px; }
+.raw-echo-empty { border-left-color: #cbd5e1; background: #f6f8fb; }
+.raw-echo-error { border-left-color: #d99a2b; background: #fff8e9; color: #6a4a12; }
+.raw-echo-edit-wrap { display: block; }
+.raw-echo-edit-wrap textarea { width: 100%; box-sizing: border-box; min-height: 48px; padding: 6px 8px; border: 1px solid #c9dcff; border-radius: 6px; background: #fff; font: inherit; font-size: 12px; resize: vertical; }
+.raw-echo-actions { display: flex; gap: 6px; margin-top: 6px; }
+.raw-echo-actions button { font-size: 11px; padding: 4px 9px; }
+.consult-page .top-nav a { color: rgba(255,255,255,.92); }
+/* Inline citation superscripts: machine fact anchors rendered as readable numbered refs. */
+.cite-ref {
+  display: inline-block; margin-left: 1px; padding: 0 3px;
+  font-size: 10px; font-weight: 600; line-height: 1.4; vertical-align: super;
+  color: #1f5fbf; background: #eaf1ff; border: 1px solid #c9dcff;
+  border-radius: 5px; cursor: pointer; text-decoration: none;
+}
+.cite-ref:hover { background: #d8e7ff; border-color: #9dbcf0; }
+.cite-ref:focus-visible { outline: 2px solid #1f5fbf; outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { .cite-ref { transition: none; } }
+
+/* Service mode pill: reflects real Provider status, not a single history turn. */
+.env-pill.svc-online { color: #bff7dc; border-color: rgba(92,242,180,.5); background: rgba(92,242,180,.14); }
+.env-pill.svc-mock { color: #ffe6a7; border-color: rgba(255,214,122,.5); background: rgba(255,214,122,.14); }
+.env-pill.svc-offline { color: rgba(255,255,255,.82); border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.08); }
+.env-pill.svc-error { color: #ffd5d5; border-color: rgba(255,150,150,.55); background: rgba(255,120,120,.16); }
+.env-pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .9; }
+@media (max-width: 760px) { .qa-status { margin: 0 10px; } }
 @media (prefers-reduced-motion: reduce) { .starter-grid button { transition: none; } }

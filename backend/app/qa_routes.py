@@ -1,6 +1,7 @@
 """Private consultation API. Cookie authentication only; execution independent of SSE delivery."""
 import asyncio
 import json
+import re
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -18,14 +19,23 @@ def private_user(request:Request):
     if user['role']!='student': raise HTTPException(403,'此入口仅供学生本人使用')
     return user
 
+def admin_user(request:Request):
+    user=accounts.session_user(request.cookies.get('fund_session'))
+    if not user: raise HTTPException(401,'请先登录后操作政策元数据')
+    if user['role']!='admin': raise HTTPException(403,'此入口仅供管理员使用')
+    return user
+
 def work(owner,tid):
     try:
+        if not sessions.claim(tid): return
         turn=sessions.get_turn(owner,tid)
-        if turn['state'] in sessions.TERMINAL: return
         evidence=qa_evidence.build(turn['question'],turn['context'],task=turn['task'])
         panel=qa_panel.build(evidence)
         sessions.prepare(tid,evidence,panel)
+        if not sessions.is_active(tid): return
+        sessions.renew(tid)
         result=provider.compose_workbench(evidence)
+        sessions.renew(tid)
         if sessions.finish(tid,result['state'],result['text'],result['citations'],result['mode'],result['fallback_reason_code']):
             db.audit(owner,'student','qa_turn_finished',tid,{'state':result['state'],'mode':result['mode']})
     except Exception:
@@ -36,6 +46,11 @@ def work(owner,tid):
 def options(u=Depends(private_user)):
     from .qa_context import PROJECTS
     return {'projects':[{'code':c,'name':n} for c,n in PROJECTS.items()], 'current_version':qa.current_version(db.APP_DB)}
+
+
+@router.put('/policy-meta/{version}/{doc_id}')
+def policy_meta(version:str, doc_id:int, payload:dict=Body(...), u=Depends(admin_user)):
+    return qa_evidence.confirm_meta(version, doc_id, payload, u['user'])
 
 @router.post('/sessions')
 def create(u=Depends(private_user)): return sessions.create(u['user'])
@@ -66,15 +81,26 @@ def accept(sid:str,payload:dict=Body(...),u=Depends(private_user)):
 @router.get('/turns/{tid}')
 def get_turn(tid:str,u=Depends(private_user)): return sessions.get_turn(u['user'],tid)
 
+@router.put('/turns/{tid}/raw-question')
+def update_raw_question(tid:str,payload:dict=Body(...),u=Depends(private_user)):
+    return sessions.update_raw(u['user'],tid,payload.get('raw_question'))
+
 @router.post('/turns/{tid}/cancel')
 def cancel(tid:str,u=Depends(private_user)):
-    sessions.get_turn(u['user'],tid);sessions.finish(tid,'cancelled')
+    sessions.get_turn(u['user'],tid)
+    sessions.finish(tid,'cancelled')
+    db.audit(u['user'],'student','qa_turn_cancelled',tid)
     return sessions.get_turn(u['user'],tid)
 
 
 @router.post('/turns/{tid}/handoff')
 def handoff(tid:str, u=Depends(private_user)):
     return sessions.create_handoff(u['user'], tid)
+
+
+@router.post('/turns/{tid}/progress-handoff')
+def progress_handoff(tid:str, payload:dict=Body(...), u=Depends(private_user)):
+    return sessions.create_handoff(u['user'], tid, kind='progress', task_id=payload.get('task_id'))
 
 
 @router.get('/handoffs/{handoff_id}')
@@ -90,6 +116,29 @@ def evidence(tid:str,eid:str,u=Depends(private_user)):
     return item
 
 
+_ANCHOR_RE = re.compile(r'\[([A-Za-z0-9:_.-]+)\]')
+_EXPORT_MODE = {'online': '在线证据编排', 'offline': '离线规则', 'mock': '测试 Mock'}
+_EXPORT_STATE = {'completed': '已完成', 'clarified': '待补充', 'refused': '未匹配依据',
+                 'failed': '生成失败', 'cancelled': '已停止', 'interrupted': '处理已中断'}
+
+
+def _readable_answer(turn: dict) -> str:
+    """把正文里的机器事实锚点转成可读引用，导出件不出现 [fact_id]。
+
+    政策原文锚点按 citations 顺序编号成〔依据N〕，与下方“政策依据”列表对应；
+    结论/材料/步骤类锚点（c0/m0/p0 等）在导出件中去掉，原文/审计仍保留原样。
+    """
+    text = turn.get('answer') or ''
+    cites = turn.get('citations') or []
+    order = {c.get('evidence_id'): i + 1 for i, c in enumerate(cites) if c.get('evidence_id')}
+
+    def repl(match):
+        n = order.get(match.group(1))
+        return f'〔依据{n}〕' if n else ''
+
+    return _ANCHOR_RE.sub(repl, text)
+
+
 def _export_markdown(session: dict, turns: list[dict]) -> str:
     lines = ['# 本人政策咨询记录', '',
              f"- 导出范围：{'单轮' if len(turns) == 1 else '全会话'}",
@@ -97,10 +146,10 @@ def _export_markdown(session: dict, turns: list[dict]) -> str:
     for number, turn in enumerate(turns, 1):
         context, panel = turn['context'], turn['panel']
         lines += [f'## {number}. {turn["question"]}', '',
-                  f"- 处理状态：{turn['state']}",
-                  f"- 回答模式：{turn['mode']}",
+                  f"- 处理状态：{_EXPORT_STATE.get(turn['state'], turn['state'])}",
+                  f"- 回答模式：{_EXPORT_MODE.get(turn['mode'], turn['mode'])}",
                   f"- 政策版本：{context.get('policy_version') or '未匹配'}", '',
-                  '### 说明', turn['answer'] or '本轮没有可导出的完整说明。', '']
+                  '### 说明', _readable_answer(turn) or '本轮没有可导出的完整说明。', '']
         if panel.get('evidence'):
             lines += ['### 政策依据']
             for item in panel['evidence']:

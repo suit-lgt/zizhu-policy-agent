@@ -556,3 +556,121 @@ NOT_RUN／已知未做：
 - 真机竖屏（iOS／Android 各一台）、真人试玩（≥5 名学生）、键盘全流程无障碍、摆摊实际场景：均 **NOT_RUN**。
 - 仅验证 Chromium 内核；Firefox／Safari 未测。
 - 本地最高分只写 `localStorage`，多设备不同步，未做账号绑定（有意为之，避免采集学生信息）。
+
+---
+
+## 政策咨询工作台交付机制完善（2026-11-21）
+
+依据 `docs/政策咨询工作台交付实施规划.md`，本轮只补代码可闭合的 P0 机制与交付态体验；在线评测、人工签认、学生实操仍为外部阻塞。
+
+### 变更
+- `backend/app/qa_sessions.py`：`claim/renew/is_active` 让 preparing 真实落库并刷新租约；读接口不再触发恢复；handoff 支持 triage/progress 两类并原子消费。
+- `backend/app/qa_routes.py`：worker 领取—续租—取消协作；新增 `/api/qa/turns/{tid}/progress-handoff` 与管理员 `/api/qa/policy-meta/{version}/{doc_id}`。
+- `backend/app/qa_evidence.py`：从 `policy_verify` 回填快照元数据；范围确认必须由管理员显式提交，未确认前保持 `needs_verification`。
+- `backend/app/provider.py`：正文 `[fact_id]` 锚点必须与 claims 一致；旧兼容入口只拦截判定性措辞，不再误伤原文描述。
+- `backend/app/main.py`：启动只恢复一次并回填元数据；创建初判任务时消费 handoff。
+- 前端：独立状态区、aria-busy、错误 role=alert、终态说明条、统一任务状态字典、进度 handoff；初判页提交时带上 handoff。
+- 测试：单元 19 → 25；端到端 11 → 14。
+
+### 实测（2026-11-21；项目环境 `zizhuagent/python.exe`，Python 3.11.18）
+| 检查 | 命令 | 结果 |
+|---|---|---|
+| Provider 自测 | `python -X utf8 -m backend.app.provider --selftest` | PASS 15/15：新增正文无锚点、未知锚点、锚点与 claims 不一致三类负样本 |
+| 工作台单元与契约 | `python -X utf8 -m unittest tests.test_qa_workbench` | PASS 25/25：含 preparing 状态、租约续期、读不恢复、handoff 一次消费、进度归属、元数据回填与显式确认 |
+| 咨询端到端 | `python -X utf8 tests/qa_workbench_flow.py` | PASS 14/14：含引导创建初判、重复消费 409、进度引导定位本人任务 |
+| 接口冒烟回归 | `python -X utf8 tests/smoke.py` | PASS 66/66 |
+| 账号流程回归 | `python -X utf8 tests/auth_flow.py` | PASS 17/17 |
+| 版本流程回归 | `python -X utf8 tests/version_flow.py` | PASS：发布/回滚版本隔离正常 |
+| 小游戏回归 | `python -X utf8 tests/game_flow.py` | PASS 25/25 |
+| 前端脚本语法 | `node --check frontend/qa-workbench.js` | PASS |
+
+### 未做／未证明
+- 在线模型 50 题回归、越界措辞抽样、时延成本：NOT_RUN（2026-11-21 已接入真实在线模式并完成单链路实测，但完整评测集尚未跑）。
+- 政策“适用范围”确认位：机制已提供，需管理员逐文件显式提交；未提交前证据继续标待核实，不由系统推断。
+- 人工语义签认、学生实操、真机窄屏与读屏走查：NOT_RUN。
+- 快照元数据回填在启动时执行；验证使用复制库，未在真实业务库上手动触发。
+
+---
+
+## 真实在线模式接入（2026-11-21）
+
+### 变更
+- `backend/app/provider.py`：
+  - 新增 `load_local_env()`，启动时从项目根 `.env` 注入 `FUND_*` 白名单配置；**已存在的环境变量优先**，因此测试可显式设 `FUND_LLM_MODE=offline` 保持确定性。此前项目无 `.env` 加载代码，是“配了密钥却仍离线”的根因。
+  - `base_url()` 校验协议头；`status()` 增加 `env_loaded_keys`（仅键名，不含值）。
+  - 新增 `ProviderFailure(reason_code)` 与 `_sanitize_error()`；错误文本统一脱敏，绝不外泄密钥、URL、响应体。
+  - `_call_workbench()` 把 HTTP 401/403→`auth_failed`、429→`rate_limited`、400/404/422→`bad_request`、5xx→`provider_error`、网络/超时→`network_error`、解析失败→`bad_response`，全部转稳定原因码，不抛原始异常文本。
+  - `compose_workbench()`：在线模式**必须**拿到通过事实守恒校验的真实模型输出；任何失败返回 `state='failed'`、`mode='online'`、明确 `fallback_reason_code` 与中文提示，**不再回退成硬编码模板伪装成功**；仅显式 `offline`/`mock` 才走规则摘录并标注。clarify/refused 为确定性分支，不发起模型调用。
+- `frontend/qa-workbench.js`：新增 `reasonText` 原因码映射；失败态 `role="alert"` 显示清晰错误与原因，不再笼统写“已使用规则说明”。
+- 测试：`auth_flow/game_flow/qa_workbench_flow/smoke/ui_flow/version_flow` 子进程显式设 `FUND_LLM_MODE=offline`，避免回归测试联网计费；`test_qa_workbench` 新增 5 项在线失败不伪装/脱敏/缺配置用例。
+
+### 实测（2026-11-21；项目环境 `zizhuagent/python.exe`，Python 3.11.18）
+| 检查 | 命令/方式 | 结果 |
+|---|---|---|
+| 真实接口连通 | 直接调用 DeepSeek `/chat/completions`（脱敏） | PASS：HTTP 200，0.55s，真实返回“连通”，usage 10 tokens |
+| Provider 自测 | `-m backend.app.provider --selftest` | PASS 18/18（含错误脱敏隐藏密钥/URL、失败原因码齐全） |
+| 咨询单元 | `-m unittest tests.test_qa_workbench` | PASS 28/28（含在线失败不伪装、鉴权/限流不重试、缺配置失败态） |
+| 函数级在线链路 | `compose_workbench()` 真实政策库+真实模型 | PASS：`state=completed`、`mode=online`、5 条真实引用、正文带 `[fact_id]`、事实守恒 True、金额来自真实原文 |
+| 失败不伪装 | 故意用错误密钥调用 | PASS：`state=failed`、`reason=auth_failed`、正文仅错误提示、无伪装规则答案、无密钥 |
+| 页面级 HTTP 流程 | 临时库+8049+真实在线：注册→登录→提问→轮询 | PASS：`state=completed`、`mode=online`、正文 1238 字带锚点、5 条引用 |
+| 回归 | qa_flow/smoke/auth/version/game | PASS 14/14、66/66、17/17、PASS、25/25 |
+| 前端语法 | `node --check frontend/qa-workbench.js` | PASS |
+| 密钥泄漏 | 全项目/跟踪文件/日志/接口/前端扫描 | PASS：仅 `.env` 含密钥；`.env` 被 Git 忽略；接口与页面均无泄漏 |
+
+### 未做／未证明（在线模式）
+- 在线 50 题评测集、越界措辞抽样、时延与成本核算：NOT_RUN。
+- 鉴权/限流/网络异常的**真实触发**仅覆盖鉴权（错误密钥）；429/5xx/超时通过单元 mock 验证原因码与失败态，未做真实压测。
+- 预览服务 8010 已重启并确认 `llm_mode=online`；页面真实咨询需在登录态下手动操作确认展示效果。
+- 密钥由用户本地提供并写入被忽略的 `.env`；如怀疑泄露请在 DeepSeek 控制台轮换。
+
+### 咨询界面状态标识纠偏（2026-11-21 下午）
+用户截图反馈：服务已切在线（实测 `/api/provider` mode=online/configured=true/model=deepseek-chat），但 qa.html 右上角徽章与对话气泡都显示「离线规则」，与真实调用要求冲突。
+根因：右上角徽章原绑定选中历史轮次的 `turn.mode`（qa-workbench.js 旧 52 行）；真实库仅 2 条轮次均为 `state=clarified, mode=offline` 的信息引导，未调用模型却被标成离线。
+改动：① 右上角徽章改由 `/api/provider` 驱动，区分在线证据编排/测试 Mock/离线规则/在线未配置/状态未知并配状态色；② 引导类（clarified/refused）轮次气泡标签改为「信息引导」，不再误标离线；③ 静态资源加版本号 `?v=20261121b` 破浏览器缓存。
+实测：`node --check` PASS；带版本号静态资源 200 且含新逻辑；ui_flow / qa_workbench_flow / smoke(66/66) 全通过；`git diff --check` 干净；后端导出与审计无「离线规则」误导字样；密钥未进入任何改动文件。
+
+### 咨询正文事实锚点转用户可读角标（2026-11-21 下午）
+用户截图反馈：在线回答正文里的 `[pv-20261107T041009:351]` 机器事实锚点学生看不懂。
+设计：校验层/存储层保留原始锚点（防编造凭证与审计），只在展示层转换。锚点编号按本轮 citations 顺序与右侧“本轮办理依据”一一对应，点击角标弹出对应政策原文；结论/材料/步骤类锚点（c0/m0/p0）展示层隐藏。
+改动：① `frontend/qa-workbench.js` 新增 `renderAnswer()/anchorIndex()/FACT_ANCHOR_RE`，正文与 SSE chunk 均走安全转义渲染，角标支持点击与键盘（Enter/空格），新增 citations 事件同步；② `frontend/qa-workbench-polish.css` 加 `.cite-ref` 样式与焦点环；③ `backend/app/qa_routes.py` 新增 `_readable_answer()`，导出 markdown 把锚点转成〔依据N〕并把 state/mode 中文化；④ `qa.html` 静态资源版本升 `?v=20261121c`。
+实测：项目环境 Python 3.11.18。compileall PASS；node --check PASS；单元 29/29（新增 ExportReadabilityTests）；qa_workbench_flow 全通过；smoke 66/66；provider selftest 18/18。真实在线端到端（临时库+8051，未污染业务库）：一次校验失败明确返回 `validation_failed`（未伪装成功），一次 `completed` 回答 8 个锚点全部映射到 citations、导出件 0 个原始 `[pv-]`、8 处〔依据N〕、模式状态已中文化。密钥未进入任何改动文件。未提交、未推送。
+
+### 原始提问由内存回显改为正式落库（2026-11-21 晚）
+
+需求：把仅存于页面内存的原始输入改为持久化，覆盖新增/修改、刷新恢复，并补校验、失败提示与防重复写入。
+
+- 数据契约：`qa_turn.raw_question TEXT NOT NULL DEFAULT ''`；新增随 `POST /turns` 写入，修改走 `PUT /turns/{tid}/raw-question`，读取随 `GET /sessions/{sid}` 返回。旧库 `init_schema()` 检测缺列后 `ALTER TABLE` 补列。
+- 写入语义：`client_request_id` 保证新增幂等；同 rid 重试不建新轮，旧客户端漏传原文时补写。更新请求原文长度须 2–1200 字，越界 422；重复值不写库、不记审计；非本人操作 404。
+- 前端：删除 `rawEcho` 内存 Map；发送时带 `raw_question`；问题气泡支持“编辑/补充”；加载失败（服务版本不匹配）显示告警；会话详情读取失败与原文保存失败均保留编辑内容并给出错误提示；初始化后自动打开最近会话，实现刷新恢复。
+- 实测：`node --check` PASS；`unittest tests.test_qa_workbench` **33/33**（新增原文落库、校验/更新幂等、旧库迁移）；`tests/qa_workbench_flow.py` **20/20**（新增落库、刷新回读、修改回读、422、404）；`tests/ui_flow.py` 全通过；`git diff --check` 通过。
+- 既有问题（本次未改）：`tests/smoke.py` 在 `GET /api/board` 处失败，服务端日志为 `backend/app/main.py:451 KeyError: 'items'`——复制库中有一条 `triage_task.result_json` 不含 `items`，看板未做兼容。本次改动未触碰 `triage_task`、看板代码或 `result_json`，判定为既有数据兼容问题，不在本次范围内。
+- 未提交、未推送。原文落库带来的隐私边界变化已写入 `docs/adr/0002-fact-grounded-language.md`。
+
+## 交付复核与遗漏修复（2026-11-21 晚）
+
+复核范围：git 状态／标签／差异、项目日志、验收台账、未跟踪交付物与 UI 参考图、跨对话变更记录检索（本次未检索到可引用的其他专家修改记录，仅以本地产物与日志为准）。结论：此前修复主体均已落在工作区，但发现 3 处遗漏/冲突并已修复。
+
+### 本次新增修复
+
+| 文件 | 修改点 | 目的 | 状态 |
+|---|---|---|---|
+| `backend/app/provider.py` | 顶部契约、`status().mode_note`、事实守恒注释改为“旧兼容问答可回退；咨询工作台失败返回 failed + 原因码，不伪装成功” | `/api/provider` 原文案仍写“失败回退离线”，与在线失败不伪装的实现冲突；徽章与接口口径需一致 | 已修复并实测 |
+| `backend/app/db.py` | 新增 `task_items(raw)`：空串、坏 JSON、缺 `items` 均返回空列表 | 历史 `triage_task.result_json='{}'` 会让看板/任务/报表接口抛 `KeyError`，此前冒烟因此失败 | 已修复并实测 |
+| `backend/app/main.py` | `/api/tasks`、`/api/board`、两级看板与报表 CSV 共 5 处改用 `db.task_items()` | 覆盖同一类历史数据兼容问题，不只修单点 | 已修复并实测 |
+| `frontend/qa-workbench.js` | “重新尝试”按钮改用 `turn.raw_question || turn.question` | 重试时不再把语义整理后的提问当成用户原文再次落库 | 已修复并实测 |
+| `deliverables/product-strategy/stakeholder-update-system-audit-2026-11-21.md` | 末尾追加“复核更正” | 该专家报告为 13:51 快照，Provider 失败语义与原文落库口径已过期；保留原文并更正，不篡改历史记录 | 已核对 |
+| `tests/test_qa_workbench.py` | 新增 Provider 状态文案、历史结果兼容、重试回显原文 3 项断言 | 防回归 | 已通过 |
+
+### 实测（项目环境 `zizhuagent/python.exe`，Python 3.11.18）
+
+| 检查 | 命令／方式 | 结果 |
+|---|---|---|
+| 前端语法与差异格式 | `node --check frontend/qa-workbench.js`、`compileall`、`git diff --check` | PASS |
+| 工作台单元与契约 | `python -X utf8 -m unittest tests.test_qa_workbench` | PASS **35/35** |
+| Provider 自测 | `FUND_LLM_MODE=offline python -X utf8 -m backend.app.provider --selftest` | PASS **18/18** |
+| 咨询端到端 | `python -X utf8 tests/qa_workbench_flow.py` | PASS（原文落库、修改回读、刷新恢复、422/404、handoff 均通过） |
+| 接口冒烟 | `python -X utf8 tests/smoke.py` | PASS **66/66**；此前 `KeyError: 'items'` 已消失 |
+| 页面／账号／版本／游戏 | `ui_flow.py`、`auth_flow.py`、`version_flow.py`、`game_flow.py` | 全 PASS（17/17、25/25 等） |
+| 预览同步 | 重启 8010 后 `/qa.html` HTTP 200；`/api/provider` 返回 `mode=online`、`configured=true` 与新文案；静态资源版本升至 `v=20261121f`；带版本号的 JS/CSS 含 `raw_question`、`cite-ref`、`svc-online`、`qa-status` 与重试原文逻辑；`/api/board` HTTP 200 | PASS，预览已加载全部修复 |
+
+边界不变：修复均未提交、未推送，Git HEAD 仍为 `v0.8.0`（`53f7d1a`）；在线 50 题回归、人工语义签认、学生实操与真机窄屏仍 NOT_RUN。本轮未重新截屏，预览验证依据是重启后的页面/接口联检与静态资源内容核对。

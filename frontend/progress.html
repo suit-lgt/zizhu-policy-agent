@@ -6,6 +6,7 @@
 <title>办理进度 · 资助政策智能体</title>
 <link rel="stylesheet" href="static/style.css">
 <link rel="stylesheet" href="static/progress-polish.css">
+<link rel="stylesheet" href="static/deepblue-theme.css">
 </head>
 <body class="student-app progress-page">
 <div class="app-shell">
@@ -222,6 +223,15 @@ function renderDetail(data) {
     ${renderSummary(data)}`;
 }
 
+async function taskFromHandoff() {
+  const id = new URLSearchParams(location.search).get("handoff");
+  if (!id) return null;
+  const res = await fetch("api/qa/handoffs/" + encodeURIComponent(id));
+  const data = await res.json();
+  if (!res.ok || data.kind !== "progress" || !data.task_id) return null;
+  return data.task_id;
+}
+
 async function loadTasks() {
   const res = await fetch("api/my-tasks", { headers: H });
   if (!res.ok) throw new Error("读取任务失败");
@@ -288,7 +298,12 @@ function esc(s) {
       (me.must_change ? ` · <b style="color:#b45309">临时密码，请尽快改密</b>` : "") +
       ` · <a href="#" onclick="fetch('api/auth/logout',{method:'POST'}).then(()=>location.reload());return false">退出</a>`;
     const items = await loadTasks();
-    const fromUrl = new URLSearchParams(location.search).get("task");
+    const hasHandoff = Boolean(new URLSearchParams(location.search).get("handoff"));
+    const handoffTask = await taskFromHandoff();
+    if (hasHandoff && !handoffTask) {
+      document.getElementById("current").innerHTML = `<div class="disclaimer">进度引导已失效，请从咨询记录重新进入，或在下方选择本人任务。</div>`;
+    }
+    const fromUrl = new URLSearchParams(location.search).get("task") || handoffTask;
     const remembered = localStorage.getItem(TASK_KEY);
     const id = fromUrl || remembered || (items[0] && items[0].task_id);
     renderTaskList(items, id);

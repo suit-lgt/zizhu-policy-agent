@@ -8,7 +8,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 tmp = Path(tempfile.mkdtemp()); shutil.copy(root/"data"/"app.db", tmp/"app.db"); shutil.copy(root/"data"/"staging"/"policies.db", tmp/"policies.db")
 c = sqlite3.connect(tmp/"app.db"); old = c.execute("SELECT version_id FROM policy_version WHERE status='current'").fetchone()[0]; c.close()
-env = dict(os.environ, APP_DB=str(tmp/"app.db"), POLICY_DB=str(tmp/"policies.db"), LOG_LEVEL="WARNING", UPLOAD_DIR=str(tmp/"uploads"))
+env = dict(os.environ, APP_DB=str(tmp/"app.db"), POLICY_DB=str(tmp/"policies.db"), LOG_LEVEL="WARNING", UPLOAD_DIR=str(tmp/"uploads"), FUND_LLM_MODE="offline")
 p = subprocess.Popen([sys.executable,"-X","utf8","-m","uvicorn","backend.app.main:app","--host","127.0.0.1","--port","8036"], cwd=str(root), env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 BASE="http://127.0.0.1:8036"
 for _ in range(40):

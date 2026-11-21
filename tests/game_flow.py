@@ -71,6 +71,7 @@ def main() -> int:
     env["APP_DB"] = str(tmp / "app.db")
     env["POLICY_DB"] = str(tmp / "policies.db")
     env["LOG_LEVEL"] = "WARNING"
+    env["FUND_LLM_MODE"] = "offline"
     proc = subprocess.Popen(
         [sys.executable, "-X", "utf8", "-m", "uvicorn", "backend.app.main:app",
          "--host", "127.0.0.1", "--port", str(PORT), "--log-level", "warning"],

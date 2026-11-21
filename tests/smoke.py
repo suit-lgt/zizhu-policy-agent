@@ -66,6 +66,7 @@ def main() -> int:
     env["APP_DB"] = str(tmp / "app.db")
     env["POLICY_DB"] = str(tmp / "policies.db")
     env["LOG_LEVEL"] = "WARNING"  # 冒烟不采集访问日志，避免管道写满阻塞服务
+    env["FUND_LLM_MODE"] = "offline"  # 测试确定性：显式覆盖 .env，不联网不计费
     proc = subprocess.Popen(
         [sys.executable, "-X", "utf8", "-m", "uvicorn", "backend.app.main:app",
          "--host", "127.0.0.1", "--port", str(PORT), "--log-level", "warning"],

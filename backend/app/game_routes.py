@@ -66,6 +66,7 @@ def list_levels():
             "scenario": lv["scenario"],
             "question": lv["question"],
             "hint": lv["hint"],
+            "trap": lv.get("trap", ""),
         })
     return {"total": len(items), "options": data["options"], "levels": items}
 

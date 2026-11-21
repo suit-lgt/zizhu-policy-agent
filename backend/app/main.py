@@ -132,11 +132,13 @@ db.init_schema()
 db.seed()
 accounts.ensure_bootstrap_admin()
 qa.ensure_snapshot(POLICY_DB)
+from .qa_evidence import ensure_meta_for_published
+ensure_meta_for_published()
 from .qa_routes import router as qa_router
 app.include_router(qa_router)
 from .game_routes import router as game_router
 app.include_router(game_router)
-from .qa_sessions import recover as recover_qa_turns
+from .qa_sessions import recover as recover_qa_turns, read_handoff as read_qa_handoff, consume_handoff as consume_qa_handoff
 recover_qa_turns()
 
 
@@ -311,7 +313,12 @@ async def create_triage(payload: Any = Body(default=None), u: dict = Depends(stu
         raise HTTPException(status_code=422, detail="请求体须为对象")
     if not payload.get("consent"):
         raise HTTPException(status_code=400, detail="需先阅读并勾选隐私授权")
-    data = {k: v for k, v in payload.items() if k != "consent"}
+    handoff_id = payload.get("handoff")
+    if handoff_id is not None and (not isinstance(handoff_id, str) or not handoff_id):
+        raise HTTPException(status_code=422, detail="引导标识无效")
+    if handoff_id is not None:
+        read_qa_handoff(u["user"], handoff_id)
+    data = {k: v for k, v in payload.items() if k != "consent" and k != "handoff"}
     result = agents.run_triage(data, tg, POLICY_DB, DISCLAIMER, current_version_id())
     if result.get("error"):
         db.audit(u["user"], u["role"], "triage_invalid", "payload", {"error": result["error"]})
@@ -321,6 +328,8 @@ async def create_triage(payload: Any = Body(default=None), u: dict = Depends(stu
     if version:
         result["policy_version"] = version
     save_task(result["task_id"], result, data, u["user"], True)
+    if handoff_id is not None:
+        consume_qa_handoff(u["user"], handoff_id, result["task_id"])
     db.audit(u["user"], u["role"], "triage", result["task_id"],
              {"hit_count": result["hit_count"], "version": result["policy_version"],
               "agents": result.get("agents", {}).get("count")})
@@ -418,7 +427,7 @@ def tasks(status: str = Query("reviewing"), u: dict = Depends(staff)):
     out = []
     for r in rows:
         full = c.execute("SELECT result_json FROM triage_task WHERE task_id=?", (r["task_id"],)).fetchone()
-        items = json.loads(full[0])["items"]
+        items = db.task_items(full[0])
         out.append({
             "task_id": r["task_id"], "created_at": r["created_at"], "status": r["status"],
             "policy_version": r["policy_version"], "hit_count": r["hit_count"],
@@ -439,7 +448,7 @@ def board(u: dict = Depends(staff)):
         by_status[r["status"]] = by_status.get(r["status"], 0) + 1
     labels: dict[str, int] = {}
     for (raw,) in c.execute("SELECT result_json FROM triage_task").fetchall():
-        for item in json.loads(raw)["items"]:
+        for item in db.task_items(raw):
             lab = item.get("conclusion_label")
             if lab:
                 labels[lab] = labels.get(lab, 0) + 1
@@ -1009,7 +1018,7 @@ def board_levels(overdue_hours: float = Query(72, ge=1), u: dict = Depends(staff
         by_status[t["status"]] = by_status.get(t["status"], 0) + 1
         if t["status"] == "reviewing" and hours_since(t["created_at"]) >= overdue_hours:
             overdue += 1
-        for item in json.loads(t["result_json"])["items"]:
+        for item in db.task_items(t["result_json"]):
             code = item.get("project_id")
             if code not in projects:
                 continue
@@ -1088,7 +1097,7 @@ def report_summary(days: int = Query(7, ge=1, le=365), u: dict = Depends(audit_r
     projects: dict[str, dict] = {}
     for r in rows:
         by_status[r["status"]] = by_status.get(r["status"], 0) + 1
-        for item in json.loads(r["result_json"])["items"]:
+        for item in db.task_items(r["result_json"]):
             lab = item.get("conclusion_label")
             if not lab:
                 continue
@@ -1117,7 +1126,7 @@ def report_csv(days: int = Query(7, ge=1, le=365), u: dict = Depends(audit_reade
     c.close()
     lines = ["任务号,创建时间,状态,政策版本,项目,结论,缺项,是否需评审"]
     for r in rows:
-        for item in json.loads(r["result_json"])["items"]:
+        for item in db.task_items(r["result_json"]):
             if not item.get("conclusion"):
                 continue
             cells = [r["task_id"], r["created_at"], r["status"], r["policy_version"] or "",

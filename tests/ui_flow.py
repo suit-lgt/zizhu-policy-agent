@@ -6,7 +6,7 @@ import base64, json, os, shutil, subprocess, sys, tempfile, time, urllib.request
 from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 tmp = Path(tempfile.mkdtemp()); shutil.copy(root/"data"/"app.db", tmp/"app.db"); shutil.copy(root/"data"/"staging"/"policies.db", tmp/"policies.db")
-env = dict(os.environ, APP_DB=str(tmp/"app.db"), POLICY_DB=str(tmp/"policies.db"), LOG_LEVEL="WARNING", UPLOAD_DIR=str(tmp/"uploads"))
+env = dict(os.environ, APP_DB=str(tmp/"app.db"), POLICY_DB=str(tmp/"policies.db"), LOG_LEVEL="WARNING", UPLOAD_DIR=str(tmp/"uploads"), FUND_LLM_MODE="offline")
 p = subprocess.Popen([sys.executable,"-X","utf8","-m","uvicorn","backend.app.main:app","--host","127.0.0.1","--port","8035"], cwd=str(root), env=env, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 BASE="http://127.0.0.1:8035"
 for _ in range(40):

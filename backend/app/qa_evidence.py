@@ -4,6 +4,7 @@ import re
 import sqlite3
 from datetime import date
 from contextlib import closing
+from fastapi import HTTPException
 from . import db, qa
 
 META_DDL = """CREATE TABLE IF NOT EXISTS policy_snapshot_meta (
@@ -14,17 +15,77 @@ def published(version):
     with closing(db.conn()) as c:
         return bool(c.execute("SELECT 1 FROM policy_version WHERE version_id=? AND status IN ('current','archived')",(version,)).fetchone())
 
+def _meta_from_verify(app, doc):
+    """Merge immutable human verification into snapshot metadata; never invent scope."""
+    meta={k:doc.get(k) for k in ('issuer','effective_from','effective_to','layer')}
+    meta.update({'region':None,'education_stage':None,'validity_confirmed':False,'scope_confirmed':False})
+    row=app.execute('SELECT * FROM policy_verify WHERE doc_id=?',(doc['id'],)).fetchone()
+    if row and row['verifier'] and row['verified_at'] and row['issuer'] and row['effective_from'] \
+            and (not row['doc_no'] or row['doc_no']==doc.get('doc_no')):
+        meta.update({'issuer':row['issuer'],'effective_from':row['effective_from'],
+                     'doc_no':row['doc_no'],'verified_by':row['verifier'],
+                     'verified_at':row['verified_at'],'validity_confirmed':True})
+    return meta
+
+
 def snapshot_metadata(version, policy_db=None):
-    """Called ONLY at new publication. Never backfill historical metadata from mutable drafts."""
-    with closing(qa.conn(policy_db)) as c:
+    """Seed metadata for one published version from immutable verification records."""
+    with closing(qa.conn(policy_db)) as c, closing(db.conn()) as app:
         c.executescript(META_DDL)
-        for row in c.execute("SELECT * FROM policy_staging WHERE status IN ('verified','published')").fetchall():
+        try:
+            rows=c.execute("SELECT * FROM policy_staging WHERE status IN ('verified','published')").fetchall()
+        except sqlite3.OperationalError:
+            rows=[]
+        for row in rows:
             d=dict(row)
-            meta={k:d.get(k) for k in ('issuer','effective_from','effective_to','layer')}
-            # Layer is not jurisdiction. Existing schema does not assert scope or open-ended validity.
-            meta.update({'region':None,'education_stage':None,'validity_confirmed':False,'scope_confirmed':False})
-            c.execute('INSERT OR IGNORE INTO policy_snapshot_meta VALUES(?,?,?)',(version,d['id'],json.dumps(meta,ensure_ascii=False)))
+            # Layer is not jurisdiction. Scope remains unconfirmed until a reviewer confirms it.
+            c.execute('INSERT OR IGNORE INTO policy_snapshot_meta VALUES(?,?,?)',
+                      (version,d['id'],json.dumps(_meta_from_verify(app,d),ensure_ascii=False)))
         c.commit()
+
+
+def ensure_meta_for_published():
+    """Backfill metadata for versions published before this mechanism existed."""
+    with closing(db.conn()) as c:
+        versions=[r[0] for r in c.execute("SELECT version_id FROM policy_version WHERE status IN ('current','archived')")]
+    for version in versions:
+        snapshot_metadata(version)
+
+
+def confirm_meta(version, doc_id, payload, actor):
+    """Reviewer-controlled scope/validity confirmation for a frozen snapshot doc."""
+    if not published(version):
+        raise HTTPException(404, '该政策版本不可引用')
+    if not isinstance(doc_id, int):
+        raise HTTPException(422, '需要有效的文件编号')
+    for key in ('scope_confirmed','validity_confirmed'):
+        if not isinstance(payload.get(key), bool):
+            raise HTTPException(422, f'{key} 须为布尔值')
+    verifier=str(payload.get('verifier') or '').strip()
+    if not verifier:
+        raise HTTPException(422, '需要核实人')
+    for key in ('effective_from','effective_to'):
+        value=payload.get(key)
+        if value not in (None,'') and (not isinstance(value,str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',value)):
+            raise HTTPException(422, f'{key} 须为 YYYY-MM-DD')
+    with closing(qa.conn()) as c:
+        c.executescript(META_DDL)
+        exists=c.execute('SELECT 1 FROM policy_snapshot_clause WHERE version_id=? AND doc_id=?',(version,doc_id)).fetchone()
+        if not exists:
+            raise HTTPException(404, '该版本没有此文件快照')
+        row=c.execute('SELECT metadata_json FROM policy_snapshot_meta WHERE version_id=? AND doc_id=?',(version,doc_id)).fetchone()
+        meta=json.loads(row[0]) if row else {}
+        meta.update({k:payload[k] for k in ('scope_confirmed','validity_confirmed')})
+        meta.update({'issuer':payload.get('issuer') or meta.get('issuer'),
+                     'effective_from':payload.get('effective_from') or meta.get('effective_from'),
+                     'effective_to':payload.get('effective_to'),
+                     'confirmed_by':verifier,'confirmed_at':db.now()})
+        c.execute('INSERT OR REPLACE INTO policy_snapshot_meta VALUES(?,?,?)',
+                  (version,doc_id,json.dumps(meta,ensure_ascii=False)))
+        c.commit()
+    db.audit(actor,'admin','qa_policy_meta_confirmed',f'{version}:{doc_id}',
+             {'scope_confirmed':payload['scope_confirmed'],'validity_confirmed':payload['validity_confirmed']})
+    return meta
 
 def resolve(version, clause_id, policy_db=None):
     if not version or not published(version): raise LookupError('该政策版本不可引用')

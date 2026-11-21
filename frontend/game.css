@@ -1,202 +1,437 @@
-/* 政策闯关：页面级样式，复用 style.css 的变量与组件 */
+/* 政策闯关 v2：案卷判读主题。作用域变量只作用于 .game-page，不污染其他端。 */
 
-.game-page { background-attachment: fixed; }
-.game-shell { width: min(720px, calc(100% - 24px)); }
-.game-main { padding: 18px 0 44px; }
-
-/* ---------- HUD ---------- */
-.game-hud {
-  display: flex; align-items: center; justify-content: space-between; gap: 14px;
-  background: #fff; border: 1px solid var(--line); border-radius: 16px;
-  padding: 11px 16px; box-shadow: var(--shadow-sm); margin-bottom: 12px;
+.game-page {
+  background-attachment: fixed;
+  --case-bg: #f4f1e9;
+  --case-paper: #fdfbf5;
+  --case-ink: #232c3b;
+  --case-navy: #17243a;
+  --case-navy-2: #223450;
+  --case-seal: #b4482b;
+  --case-seal-soft: #fbece6;
+  --case-rule: rgba(35, 44, 59, .16);
+  --case-rule-soft: rgba(35, 44, 59, .09);
+  --case-teal: #0f7a63;
+  --case-amber: #a8650c;
+  --case-gray: #6b7280;
+  --case-shadow: 0 14px 34px rgba(23, 36, 58, .12);
 }
-.hud-left { min-width: 0; }
-.hud-level { display: flex; align-items: baseline; gap: 3px; }
-.hud-level b { font-size: 19px; color: var(--navy); line-height: 1; }
+.game-page body, body.game-page { background: var(--case-bg); }
+.game-page .app-shell { background: transparent; }
+
+.game-shell { width: min(1040px, calc(100% - 32px)); }
+.game-main { padding: 20px 0 48px; }
+
+/* 案卷顶栏：深墨蓝卡头，与其他端的政务蓝拉开差异 */
+.game-page .topbar {
+  background: linear-gradient(135deg, var(--case-navy), var(--case-navy-2));
+  border: 1px solid rgba(255, 255, 255, .08);
+  box-shadow: var(--case-shadow);
+}
+.game-page .topbar::after { opacity: .25; }
+.game-page .top-nav a.on {
+  background: rgba(180, 72, 43, .22);
+  color: #ffd9cc;
+  box-shadow: inset 0 0 0 1px rgba(180, 72, 43, .45);
+}
+.game-page .env-pill { background: rgba(255, 255, 255, .12); color: #e8edf6; border-color: rgba(255, 255, 255, .18); }
+.game-page .disclaimer {
+  background: var(--case-seal-soft);
+  border-color: rgba(180, 72, 43, .28);
+  color: #8a3a24;
+}
+/* 主按钮统一为案卷印章色，去掉全站的政务蓝渐变 */
+.game-page .btn-main {
+  background: var(--case-seal);
+  box-shadow: 0 8px 18px rgba(180, 72, 43, .24);
+}
+.game-page .btn-main:hover { background: #9e3c22; }
+.game-page .ghost { color: var(--case-seal); }
+
+/* ---------- HUD：六段关卡刻度 + 信任印章 ---------- */
+.game-hud {
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  background: var(--case-paper); border: 1px solid var(--case-rule);
+  border-radius: 14px; padding: 12px 18px; box-shadow: var(--case-shadow); margin-bottom: 14px;
+}
+.hud-left { min-width: 0; flex: 1; }
+.hud-level { display: flex; align-items: baseline; gap: 4px; }
+.hud-level b { font-size: 20px; color: var(--case-navy); line-height: 1; font-variant-numeric: tabular-nums; }
 .hud-level span { font-size: 12px; color: var(--muted-2); }
-.hud-track { width: 116px; height: 6px; border-radius: 999px; background: var(--soft-2); overflow: hidden; margin-top: 7px; }
-.hud-track i { display: block; height: 100%; width: 0; border-radius: 999px; background: linear-gradient(90deg, var(--blue), var(--cyan)); transition: width .35s ease; }
-.hud-right { display: flex; align-items: center; gap: 14px; }
-.hud-hearts { display: flex; gap: 4px; color: #e05c5c; }
-.hud-hearts .heart { display: flex; transition: opacity .25s, transform .25s; }
-.hud-hearts .heart.off { opacity: .16; transform: scale(.9); }
-.hud-score { font-size: 15px; font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; }
+.hud-track { width: 100%; margin-top: 9px; }
+.hud-segs { display: flex; gap: 4px; }
+.hud-segs i {
+  flex: 1; height: 6px; border-radius: 2px; background: var(--case-rule-soft);
+  transition: background .3s, transform .3s;
+}
+.hud-track i.done { background: var(--case-seal); }
+.hud-track i.current { background: linear-gradient(90deg, var(--case-seal), #d97a52); transform: scaleY(1.4); }
+.hud-right { display: flex; align-items: center; gap: 16px; }
+.hud-seal-label { font-size: 10px; letter-spacing: 1px; color: var(--muted-2); text-align: right; }
+.hud-hearts { display: flex; gap: 5px; color: var(--case-seal); }
+.hud-hearts .heart { display: flex; transition: opacity .3s, transform .3s, color .3s; }
+.hud-hearts .heart.off { opacity: .18; transform: scale(.82) rotate(-18deg); }
+.hud-score { font-size: 17px; font-weight: 800; color: var(--case-navy); font-variant-numeric: tabular-nums; }
 .hud-score::after { content: " 分"; font-size: 10px; font-weight: 600; color: var(--muted-2); }
 
-.game-disclaimer { margin-bottom: 14px; font-size: 12px; }
+.game-disclaimer { margin-bottom: 16px; font-size: 12px; }
 
-/* ---------- 通用卡片 ---------- */
+/* ---------- 案卷纸卡 ---------- */
 .game-card {
-  background: #fff; border: 1px solid var(--line); border-radius: 20px;
-  padding: 22px 22px 20px; box-shadow: var(--shadow-sm);
+  background: var(--case-paper); border: 1px solid var(--case-rule);
+  border-radius: 12px; padding: 26px 28px; box-shadow: var(--case-shadow);
+  position: relative;
 }
-.game-kicker { font-size: 11px; letter-spacing: 1.4px; color: var(--blue); font-weight: 750; text-transform: uppercase; }
-.game-title { font-size: 22px; line-height: 1.35; margin: 8px 0 12px; color: var(--navy); letter-spacing: -.3px; }
-.game-scenario { font-size: 15px; line-height: 1.85; color: var(--ink); margin: 0; }
-.game-question { font-size: 14.5px; font-weight: 700; color: var(--blue); margin: 14px 0 0; }
+.game-card::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--case-seal); border-radius: 12px 0 0 12px;
+}
+.game-kicker { font-size: 11px; letter-spacing: 2px; color: var(--case-seal); font-weight: 800; }
+.game-title { font-size: 23px; line-height: 1.35; margin: 9px 0 14px; color: var(--case-navy); letter-spacing: -.3px; }
+.game-scenario { font-size: 15px; line-height: 1.9; color: var(--case-ink); margin: 0; }
+.game-question { font-size: 14.5px; font-weight: 700; color: var(--case-seal); margin: 16px 0 0; }
 
-.game-hint-row { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.game-hint-row { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--case-rule); }
 .game-hint {
   font-family: inherit; font-size: 12.5px; color: var(--muted); cursor: pointer;
-  background: var(--soft); border: 1px solid var(--line); border-radius: 999px;
-  padding: 6px 14px; transition: color .18s, border-color .18s;
+  background: transparent; border: 1px solid var(--case-rule); border-radius: 8px;
+  padding: 7px 15px; transition: color .18s, border-color .18s, background .18s;
 }
-.game-hint:hover { color: var(--blue); border-color: var(--blue); }
+.game-hint:hover { color: var(--case-seal); border-color: var(--case-seal); background: var(--case-seal-soft); }
 .game-hint:disabled { cursor: default; color: var(--muted-2); opacity: .7; }
 .game-hint-text {
-  margin: 10px 0 0; font-size: 13px; line-height: 1.75; color: var(--ink);
-  background: #fffdf5; border-left: 3px solid #e2a43d; border-radius: 8px; padding: 10px 12px;
+  margin: 12px 0 0; font-size: 13px; line-height: 1.75; color: var(--case-ink);
+  background: #fff9e9; border-left: 3px solid #d19b34; border-radius: 8px; padding: 11px 13px;
 }
 
-/* ---------- 三选一 ---------- */
-.game-options { display: grid; gap: 10px; margin-top: 14px; }
+/* ---------- 双栏：play 态情景与判档并排 ---------- */
+.play-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 16px; align-items: start; }
+.play-aside { display: grid; gap: 12px; }
+.play-aside-head {
+  background: var(--case-navy); color: #f3f5f9; border-radius: 12px 12px 0 0;
+  padding: 11px 14px; font-size: 12.5px; letter-spacing: .5px; font-weight: 700;
+}
+.play-aside-head small { display: block; font-size: 11px; color: rgba(255,255,255,.6); font-weight: 400; margin-top: 3px; letter-spacing: 0; }
+.play-options { display: grid; gap: 10px; }
+
+/* ---------- 三档判读选项 ---------- */
 .opt {
   display: flex; align-items: center; gap: 13px; width: 100%;
-  padding: 15px 16px; border-radius: 16px; border: 1.5px solid var(--line-strong);
-  background: #fff; text-align: left; cursor: pointer; font-family: inherit;
-  transition: transform .12s ease, box-shadow .18s ease, border-color .18s ease;
+  padding: 15px 16px; border-radius: 10px; border: 1.5px solid var(--case-rule);
+  background: var(--case-paper); text-align: left; cursor: pointer; font-family: inherit;
+  transition: transform .12s ease, box-shadow .18s ease, border-color .18s ease, background .18s;
 }
-.opt:hover { box-shadow: var(--shadow-sm); }
+.opt:hover { box-shadow: var(--case-shadow); border-color: var(--case-navy); }
 .opt:active { transform: scale(.99); }
-.opt:disabled { cursor: default; opacity: .5; }
-.opt.is-picked { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(11, 99, 214, .12); opacity: 1; }
-.opt-mark { width: 34px; height: 34px; flex: none; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 15px; }
+.opt:disabled { cursor: default; opacity: .55; }
+.opt.is-picked { border-color: var(--case-seal); box-shadow: 0 0 0 3px rgba(180, 72, 43, .14); opacity: 1; background: var(--case-seal-soft); }
+.opt-mark {
+  width: 36px; height: 36px; flex: none; border-radius: 9px; display: flex;
+  align-items: center; justify-content: center; font-weight: 800; font-size: 17px;
+  border: 1.5px solid currentColor;
+}
 .opt-body { flex: 1; min-width: 0; }
-.opt-body b { display: block; font-size: 15.5px; color: var(--ink); }
-.opt-body small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
-.opt-key { font-size: 10.5px; color: var(--muted-2); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; flex: none; }
-.opt-eligible .opt-mark { background: #effcf8; color: var(--teal); }
-.opt-eligible:hover { border-color: var(--teal); }
-.opt-need_check .opt-mark { background: #fffaf0; color: var(--amber); }
-.opt-need_check:hover { border-color: var(--amber); }
-.opt-not_applicable .opt-mark { background: #f7f9fc; color: var(--gray); }
-.opt-not_applicable:hover { border-color: var(--gray); }
+.opt-body b { display: block; font-size: 15.5px; color: var(--case-navy); }
+.opt-body small { display: block; font-size: 12px; color: var(--muted); margin-top: 3px; }
+.opt-key { font-size: 10.5px; color: var(--muted-2); border: 1px solid var(--case-rule); border-radius: 5px; padding: 1px 6px; flex: none; }
+.opt-eligible .opt-mark { background: #effcf8; color: var(--case-teal); }
+.opt-need_check .opt-mark { background: #fffaf0; color: var(--case-amber); }
+.opt-not_applicable .opt-mark { background: #f7f9fc; color: var(--case-gray); }
 
-/* ---------- 揭晓 ---------- */
-.reveal { background: #fff; border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-sm); overflow: hidden; }
-.reveal::before { content: ""; display: block; height: 5px; }
-.reveal.ok::before { background: linear-gradient(90deg, var(--teal), #43d4bd); }
-.reveal.no::before { background: linear-gradient(90deg, #d97706, #f0b45a); }
-.reveal-inner { padding: 18px 20px 20px; }
-.reveal-head { display: flex; align-items: center; gap: 12px; }
+/* ---------- 揭晓：案卷翻牌 ---------- */
+.reveal-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 16px; align-items: start; }
+.reveal {
+  background: var(--case-paper); border: 1.5px solid var(--case-rule);
+  border-radius: 12px; box-shadow: var(--case-shadow); overflow: hidden;
+  animation: caseFlip .42s cubic-bezier(.2, .8, .3, 1) both;
+}
+@keyframes caseFlip {
+  from { opacity: 0; transform: perspective(900px) rotateX(-9deg) translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.reveal.ok { border-color: rgba(15, 122, 99, .45); }
+.reveal.no { border-color: rgba(180, 72, 43, .5); }
+.reveal-ribbon {
+  padding: 9px 18px; font-size: 11.5px; font-weight: 800; letter-spacing: 2px;
+  color: #fff; text-align: center;
+}
+.reveal.ok .reveal-ribbon { background: var(--case-teal); }
+.reveal.no .reveal-ribbon { background: var(--case-seal); }
+.reveal-inner { padding: 18px 22px 22px; }
+.reveal-head { display: flex; align-items: center; gap: 14px; }
 .reveal-icon {
-  width: 40px; height: 40px; flex: none; border-radius: 13px;
-  display: flex; align-items: center; justify-content: center; font-size: 19px; font-weight: 800;
+  width: 46px; height: 46px; flex: none; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 21px; font-weight: 800;
+  border: 1.5px solid currentColor;
 }
-.reveal.ok .reveal-icon { background: #effcf8; color: var(--teal); }
-.reveal.no .reveal-icon { background: #fffaf0; color: #c47a10; }
-.reveal-head b { display: block; font-size: 16.5px; color: var(--navy); }
-.reveal-head small { display: block; font-size: 11.5px; color: var(--muted-2); margin-top: 2px; }
+.reveal.ok .reveal-icon { background: #effcf8; color: var(--case-teal); }
+.reveal.no .reveal-icon { background: var(--case-seal-soft); color: var(--case-seal); }
+.reveal-head b { display: block; font-size: 17px; color: var(--case-navy); }
+.reveal-head small { display: block; font-size: 11.5px; color: var(--muted-2); margin-top: 3px; }
 
-.reveal-answer { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin: 14px 0 0; }
-.reveal-your { font-size: 12.5px; color: var(--muted); }
-.reveal-teach { font-size: 14px; line-height: 1.85; color: var(--ink); margin: 12px 0 0; }
+/* 你选 vs 实际：左右对照 */
+.reveal-answer { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; margin: 18px 0 0; }
+.answer-box { background: var(--case-bg); border: 1px solid var(--case-rule-soft); border-radius: 10px; padding: 11px 13px; text-align: center; }
+.answer-box .ab-label { display: block; font-size: 10.5px; color: var(--muted-2); letter-spacing: .5px; }
+.answer-box .ab-value { display: block; font-size: 15px; font-weight: 800; margin-top: 5px; color: var(--muted); }
+.answer-box.wrong .ab-value { text-decoration: line-through; text-decoration-color: var(--case-seal); }
+.answer-box.right .ab-value { color: var(--case-navy); }
+.answer-arrow { font-size: 18px; color: var(--case-seal); }
+.reveal-teach { font-size: 14px; line-height: 1.9; color: var(--case-ink); margin: 16px 0 0; }
 .reveal-missing {
-  margin: 10px 0 0; font-size: 12.5px; color: var(--amber);
-  background: #fffaf0; border-radius: 9px; padding: 8px 11px;
+  margin: 12px 0 0; font-size: 12.5px; color: var(--case-amber);
+  background: #fffaf0; border-left: 3px solid #d19b34; border-radius: 8px; padding: 9px 12px;
+}
+.trap-tag {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+  font-size: 12px; font-weight: 700; color: var(--case-seal);
+  background: var(--case-seal-soft); border: 1px dashed rgba(180, 72, 43, .4);
+  border-radius: 8px; padding: 7px 11px;
 }
 
-.reveal-clauses { margin-top: 16px; }
-.rc-title { font-size: 11.5px; letter-spacing: .6px; color: var(--muted-2); margin-bottom: 8px; }
+/* 依据侧栏：提权到与结论并排 */
+.reveal-evidence {
+  background: var(--case-paper); border: 1px solid var(--case-rule);
+  border-radius: 12px; box-shadow: var(--case-shadow); padding: 18px 18px 20px;
+  animation: caseFlip .42s .06s cubic-bezier(.2, .8, .3, 1) both;
+}
+.rc-title { font-size: 11.5px; letter-spacing: 1.4px; color: var(--muted-2); margin-bottom: 12px; font-weight: 800; }
 .game-clause {
   display: block; width: 100%; text-align: left; font-family: inherit; cursor: pointer;
-  background: #f7fbff; border: 1px solid var(--line); border-left: 3px solid var(--blue);
-  border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
-  transition: background .18s, border-color .18s;
+  background: var(--case-bg); border: 1px solid var(--case-rule); border-left: 3px solid var(--case-seal);
+  border-radius: 8px; padding: 12px 13px; margin-bottom: 10px;
+  transition: background .18s, border-color .18s, transform .18s;
 }
-.game-clause:hover { background: #eef6ff; border-color: var(--blue); }
-.gc-doc { display: block; font-size: 11.5px; color: var(--blue); font-weight: 700; }
-.gc-quote { display: block; font-size: 12.5px; line-height: 1.75; color: var(--ink); margin-top: 4px; }
-.gc-more { display: block; font-size: 11px; color: var(--muted-2); margin-top: 5px; }
-
-.reveal-more { margin-top: 12px; }
+.game-clause:hover { background: var(--case-seal-soft); border-color: var(--case-seal); transform: translateX(2px); }
+.gc-doc { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--case-seal); font-weight: 800; }
+.gc-art {
+  font-size: 10.5px; color: var(--case-seal); background: var(--case-seal-soft);
+  border-radius: 4px; padding: 2px 6px; white-space: nowrap;
+}
+.gc-quote { display: block; font-size: 12.5px; line-height: 1.75; color: var(--case-ink); margin-top: 6px; }
+.gc-more { display: block; font-size: 11px; color: var(--muted-2); margin-top: 7px; }
+.reveal-more { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--case-rule); }
 .reveal-more summary { cursor: pointer; font-size: 12.5px; color: var(--muted); }
-.reveal-more ul { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.8; color: var(--ink); }
+.reveal-more ul { margin: 9px 0 0; padding-left: 18px; font-size: 12.5px; line-height: 1.8; color: var(--case-ink); }
 .reveal-note { font-size: 11.5px; color: var(--muted-2); margin: 8px 0 0; }
 
-.reveal-actions { margin-top: 14px; display: flex; gap: 10px; }
+.reveal-actions { margin-top: 16px; display: flex; gap: 10px; }
 .reveal-actions .btn-main { flex: 1; }
 
 /* ---------- 开场 ---------- */
-.intro-hero { text-align: center; padding: 6px 4px 2px; }
-.intro-art { width: 96px; height: 112px; margin: 0 auto 6px; }
-.intro-hero h1 { font-size: 25px; margin: 4px 0 8px; color: var(--navy); letter-spacing: -.4px; }
-.intro-hero p { font-size: 14px; line-height: 1.85; color: var(--muted); margin: 0 auto; max-width: 400px; }
-.intro-rules { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; text-align: left; }
-.intro-rules li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.7; background: var(--soft); border-radius: 12px; padding: 10px 12px; }
+.intro-hero { text-align: center; padding: 8px 4px 2px; }
+.intro-art { width: 100px; height: 116px; margin: 0 auto 8px; }
+.intro-hero h1 { font-size: 26px; margin: 4px 0 10px; color: var(--case-navy); letter-spacing: -.4px; }
+.intro-hero p { font-size: 14px; line-height: 1.85; color: var(--muted); margin: 0 auto; max-width: 460px; }
+.intro-rules { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: left; }
+.intro-rules li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; line-height: 1.7; background: var(--case-paper); border: 1px solid var(--case-rule); border-radius: 10px; padding: 12px; }
 .intro-rules b { flex: none; }
-.intro-rules .r-eligible b { color: var(--teal); }
-.intro-rules .r-need_check b { color: var(--amber); }
-.intro-rules .r-not_applicable b { color: var(--gray); }
-.intro-trust { margin: 14px 0 0; font-size: 12.5px; color: var(--muted); }
-.intro-actions { margin-top: 18px; }
-.intro-actions .btn-main { width: 100%; font-size: 15.5px; padding: 13px; }
-.intro-best { margin: 10px 0 0; font-size: 12px; color: var(--muted-2); }
+.intro-rules span { color: var(--muted); }
+.intro-rules .r-eligible b { color: var(--case-teal); }
+.intro-rules .r-need_check b { color: var(--case-amber); }
+.intro-rules .r-not_applicable b { color: var(--case-gray); }
+.intro-trust { margin: 16px 0 0; font-size: 12.5px; color: var(--muted); }
+.intro-actions { margin-top: 20px; }
+.intro-actions .btn-main { width: min(320px, 100%); font-size: 15.5px; padding: 13px; }
+.intro-best { margin: 10px 0 0; font-size: 12px; color: var(--case-seal); font-weight: 700; }
 
 /* ---------- 结算 / 失败 ---------- */
-.summary { background: #fff; border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow-sm); padding: 24px 20px; text-align: center; }
-.summary-stars { font-size: 32px; letter-spacing: 7px; color: #e2a43d; line-height: 1.2; }
-.summary-stars .off { color: #dfe6ef; }
-.summary-score { margin-top: 6px; }
-.summary-score b { font-size: 54px; color: var(--navy); letter-spacing: -2px; font-variant-numeric: tabular-nums; }
+.summary { background: var(--case-paper); border: 1px solid var(--case-rule); border-radius: 12px; box-shadow: var(--case-shadow); padding: 28px 24px; text-align: center; }
+.summary-stars { font-size: 34px; letter-spacing: 8px; color: #d19b34; line-height: 1.2; }
+.summary-stars .off { color: #dfe3e8; }
+.summary-score { margin-top: 8px; }
+.summary-score b { font-size: 56px; color: var(--case-navy); letter-spacing: -2px; font-variant-numeric: tabular-nums; }
 .summary-score span { font-size: 14px; color: var(--muted-2); margin-left: 4px; }
-.summary-title { font-size: 16px; font-weight: 750; color: var(--ink); margin-top: 2px; }
+.summary-title { font-size: 17px; font-weight: 800; color: var(--case-seal); margin-top: 2px; }
 .summary-line { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
 
-.summary-block { margin-top: 20px; text-align: left; }
-.summary-block h2 { font-size: 12px; letter-spacing: .6px; color: var(--muted-2); font-weight: 700; margin: 0 0 8px; }
-.tier-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.summary-block { margin-top: 22px; text-align: left; }
+.summary-block h2 { font-size: 12px; letter-spacing: 1px; color: var(--muted-2); font-weight: 800; margin: 0 0 10px; }
+.tier-row { display: grid; grid-template-columns: 90px 1fr 58px; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px dashed var(--case-rule); }
 .tier-row:last-child { border-bottom: 0; }
-.tier-row .tr-name { font-size: 13px; color: var(--ink); }
-.tier-row .tr-val { font-size: 13px; font-weight: 750; color: var(--navy); }
-.tier-row .tr-val.perfect { color: var(--teal); }
-.tier-row .tr-val.zero { color: var(--gray); }
+.tier-row .tr-name { font-size: 13px; color: var(--case-ink); }
+.tr-bar { height: 8px; border-radius: 4px; background: var(--case-rule-soft); overflow: hidden; }
+.tr-bar i { display: block; height: 100%; background: var(--case-seal); border-radius: 4px; }
+.tier-row .tr-val { font-size: 13px; font-weight: 800; color: var(--case-navy); text-align: right; font-variant-numeric: tabular-nums; }
+.tier-row .tr-val.perfect { color: var(--case-teal); }
+.tier-row .tr-val.zero { color: var(--case-gray); }
 
-.wrong-item { background: var(--soft); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
-.wrong-item .wi-title { font-size: 13px; font-weight: 700; color: var(--ink); }
-.wrong-item .wi-line { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.wrong-item { background: var(--case-bg); border: 1px solid var(--case-rule-soft); border-left: 3px solid var(--case-seal); border-radius: 8px; padding: 11px 13px; margin-bottom: 9px; }
+.wrong-item .wi-title { font-size: 13px; font-weight: 700; color: var(--case-ink); }
+.wrong-item .wi-line { font-size: 12px; color: var(--muted); margin-top: 5px; }
 .wrong-item .wi-line .tier { margin: 0 3px; }
-.wrong-empty { font-size: 13px; color: var(--teal); }
+.wrong-empty { font-size: 13px; color: var(--case-teal); }
 
-.summary-actions { margin-top: 20px; display: grid; gap: 9px; }
+.summary-actions { margin-top: 22px; display: grid; gap: 9px; }
 .summary-actions .btn-main, .summary-actions .ghost { width: 100%; text-align: center; }
 .summary-disclaimer { font-size: 11.5px; color: var(--muted-2); margin: 16px 0 0; line-height: 1.7; }
 
-.failed-art { width: 82px; height: 96px; margin: 0 auto 10px; }
-.failed h1 { font-size: 22px; color: var(--navy); margin: 0 0 8px; }
-.failed p { font-size: 14px; line-height: 1.85; color: var(--muted); margin: 0 auto; max-width: 400px; }
-.failed-tip { margin-top: 12px !important; font-size: 12.5px !important; background: #fffaf0; border-radius: 10px; padding: 10px 12px; color: var(--amber) !important; }
-.failed-actions { margin-top: 18px; display: grid; gap: 9px; }
+.failed-art { width: 86px; height: 100px; margin: 0 auto 12px; }
+.failed h1 { font-size: 22px; color: var(--case-navy); margin: 0 0 8px; }
+.failed p { font-size: 14px; line-height: 1.85; color: var(--muted); margin: 0 auto; max-width: 460px; }
+.failed-tip { margin-top: 14px !important; font-size: 12.5px !important; background: var(--case-seal-soft); border-left: 3px solid var(--case-seal); border-radius: 8px; padding: 11px 13px; color: #8a3a24 !important; }
+.failed-actions { margin-top: 20px; display: grid; gap: 9px; }
 .failed-actions .btn-main, .failed-actions .ghost { width: 100%; text-align: center; }
-.failed-block { margin-top: 20px; text-align: left; }
+.failed-block { margin-top: 22px; text-align: left; }
 
 /* ---------- 加载 / 报错 ---------- */
 .game-loading { text-align: center; padding: 40px 20px; }
 .game-loading p { font-size: 13.5px; color: var(--muted); margin: 12px 0 0; }
-.loading-dot { width: 26px; height: 26px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--soft-2); border-top-color: var(--blue); animation: gspin .8s linear infinite; }
+.loading-dot { width: 26px; height: 26px; margin: 0 auto; border-radius: 50%; border: 3px solid var(--case-rule); border-top-color: var(--case-seal); animation: gspin .8s linear infinite; }
 @keyframes gspin { to { transform: rotate(360deg); } }
 .game-error { text-align: center; }
-.game-error h2 { font-size: 18px; color: var(--navy); margin: 0 0 8px; }
+.game-error h2 { font-size: 18px; color: var(--case-navy); margin: 0 0 8px; }
 .game-error p { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
 
-.game-foot { font-size: 11.5px; color: var(--muted-2); text-align: center; margin: 16px 0 0; line-height: 1.7; }
+/* ---------- v3 新增：线索代价 / 复习态 / 冻结 HUD / 解析回看 ---------- */
+.intro-hint-note { margin: 8px 0 0 !important; font-size: 12px !important; color: var(--muted-2) !important; }
+.hint-penalty {
+  margin: 12px 0 0; font-size: 12px; color: var(--case-amber);
+  background: #fffaf0; border-left: 3px solid #d19b34; border-radius: 8px; padding: 8px 12px;
+}
 
-/* ---------- 窄屏 ---------- */
+/* HUD 冻结：终局页保留段位定位，降低强调；复习态隐藏心与分数单位 */
+.game-hud.frozen { opacity: .62; }
+.game-hud.reviewing .hud-hearts { display: none; }
+.game-hud.reviewing .hud-score { font-size: 14px; color: var(--case-seal); }
+.game-hud.reviewing .hud-score::after { content: ""; }
+
+/* 复习揭晓：只用正确档位，不做对错对照 */
+.reveal.review { border-color: rgba(180, 72, 43, .4); }
+.reveal.review .reveal-ribbon { background: var(--case-navy-2); }
+.reveal.review .reveal-icon { background: #effcf8; color: var(--case-teal); }
+.review-answer { margin: 18px 0 0; }
+.review-answer .tier { font-size: 16px; padding: 7px 14px; border-radius: 8px; }
+.review-done { padding: 40px 24px; }
+.review-done-mark {
+  width: 58px; height: 58px; margin: 0 auto 16px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; color: var(--case-teal); background: #effcf8;
+  border: 2px solid var(--case-teal);
+}
+
+/* 错题解析展开（结算页与失败页共用） */
+.wi-detail { margin-top: 9px; border-top: 1px dashed var(--case-rule); padding-top: 8px; }
+.wi-detail summary { cursor: pointer; font-size: 12px; color: var(--case-seal); font-weight: 700; list-style: none; }
+.wi-detail summary::-webkit-details-marker { display: none; }
+.wi-detail summary::before { content: "＋ "; font-weight: 800; }
+.wi-detail[open] summary::before { content: "－ "; }
+.wi-teach { font-size: 12.5px; line-height: 1.85; color: var(--case-ink); margin: 10px 0 0; }
+.wi-clauses { margin-top: 10px; }
+.wi-clauses .game-clause { background: var(--case-paper); padding: 10px 11px; margin-bottom: 8px; }
+.wi-clauses .gc-quote { font-size: 12px; }
+
+/* 失败页：分数行 + 插画灰阶（与案卷主题统一） */
+.failed-best { margin: 8px auto 0 !important; font-size: 12.5px !important; color: var(--case-seal) !important; font-weight: 700; }
+.failed-art { filter: grayscale(.8) opacity(.85); }
+.failed-actions .btn-ghost { width: 100%; text-align: center; }
+
+/* 网络异常重试区 */
+.game-error-actions { display: flex; gap: 10px; justify-content: center; }
+.game-page .btn-ghost {
+  font-family: inherit; font-size: 14px; cursor: pointer; border-radius: 10px;
+  padding: 12px 18px; background: transparent; border: 1.5px solid var(--case-rule); color: var(--muted);
+  transition: border-color .18s, color .18s;
+}
+.game-page .btn-ghost:hover { border-color: var(--case-seal); color: var(--case-seal); }
+
+.game-foot { font-size: 11.5px; color: var(--muted-2); text-align: center; margin: 18px 0 0; line-height: 1.7; }
+
+/* ================= v4 UI 精修：配色协调 / 字体层级 / 呼吸感 / 视觉奖励 ================= */
+/* 顶栏加一道印章色细线，提升精致度 */
+.game-page .topbar { box-shadow: var(--case-shadow), inset 0 -2px 0 rgba(180, 72, 43, .5); }
+
+/* 主卡阴影更柔、更有层次 */
+.game-card, .reveal, .reveal-evidence, .summary {
+  box-shadow: 0 18px 40px rgba(23, 36, 58, .10), 0 2px 6px rgba(23, 36, 58, .05);
+}
+
+/* HUD 数字更醒目、段位更清晰 */
+.hud-level b { font-size: 22px; }
+.hud-segs i { height: 7px; border-radius: 3px; }
+.hud-track i.current { transform: scaleY(1.5); }
+
+/* 揭晓 ribbon：语义色渐变，与案卷主题协调（去掉突兀的纯色荧光绿） */
+.reveal.ok .reveal-ribbon { background: linear-gradient(135deg, #0f7a63, #12957b); }
+.reveal.no .reveal-ribbon { background: linear-gradient(135deg, #b4482b, #c85a38); }
+.reveal.review .reveal-ribbon { background: linear-gradient(135deg, #17243a, #2c4260); }
+
+/* 字体层级微调 */
+.game-kicker { font-size: 11.5px; }
+.reveal-head b { font-size: 18px; }
+.reveal-teach { font-size: 14.5px; }
+.answer-box .ab-label { font-size: 11px; letter-spacing: .8px; }
+.gc-quote { font-size: 13px; }
+.game-clause .gc-doc { font-size: 12px; }
+.game-disclaimer { font-size: 12.5px; }
+
+/* 对照框视觉奖励：答对突出正确档位，答错强化你选的 */
+.reveal.ok .answer-box.right { background: #effcf8; border-color: rgba(15, 122, 99, .38); }
+.reveal.ok .answer-box.right .ab-value { color: var(--case-teal); }
+.reveal.no .answer-box.wrong { background: var(--case-seal-soft); border-color: rgba(180, 72, 43, .3); }
+
+/* 政策依据卡片：统一左边框与底色，末张不留空 */
+.reveal-evidence .game-clause { border-left-width: 4px; background: #fffdf8; }
+.reveal-evidence .game-clause:last-of-type { margin-bottom: 0; }
+
+/* 间距呼吸感 */
+.reveal-inner { padding: 22px 24px 24px; }
+.reveal-answer { margin-top: 20px; }
+.reveal-teach { margin-top: 18px; }
+.reveal-evidence { padding: 20px 20px 22px; }
+
+/* 主按钮：高光 + 悬停位移 */
+.game-page .btn-main {
+  background: linear-gradient(180deg, #c0522f, var(--case-seal));
+  box-shadow: 0 8px 18px rgba(180, 72, 43, .24), inset 0 1px 0 rgba(255, 255, 255, .18);
+  transition: transform .15s, box-shadow .18s, background .18s;
+}
+.game-page .btn-main:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(180, 72, 43, .3), inset 0 1px 0 rgba(255, 255, 255, .18);
+}
+
+/* ---------- 音效开关按钮 ---------- */
+.top-actions { display: flex; align-items: center; gap: 10px; }
+.sound-toggle {
+  position: relative; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .18);
+  color: #e8edf6; cursor: pointer; font-size: 16px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .18s, transform .18s, color .18s;
+}
+.sound-toggle:hover { background: rgba(255, 255, 255, .22); transform: scale(1.06); }
+.sound-toggle.muted { color: rgba(232, 237, 246, .5); background: rgba(255, 255, 255, .06); }
+.sound-toggle.muted::after {
+  content: ""; position: absolute; left: 6px; right: 6px; top: 50%;
+  height: 1.5px; background: currentColor; transform: rotate(-45deg);
+}
+
+/* ---------- 窄屏：回到单列 ---------- */
+@media (max-width: 860px) {
+  .play-grid, .reveal-grid { grid-template-columns: 1fr; }
+  .intro-rules { grid-template-columns: 1fr; }
+}
 @media (max-width: 480px) {
   .game-shell { width: calc(100% - 20px); }
   .game-main { padding: 14px 0 36px; }
-  .game-card { padding: 18px 16px 16px; border-radius: 17px; }
+  .game-card { padding: 19px 17px 17px; border-radius: 10px; }
   .game-title { font-size: 19.5px; }
   .game-scenario { font-size: 14.5px; line-height: 1.8; }
-  .opt { padding: 13px 13px; gap: 11px; }
+  .opt { padding: 13px; gap: 11px; }
   .opt-body b { font-size: 15px; }
   .opt-key { display: none; }
-  .reveal-inner { padding: 16px 15px 17px; }
+  .reveal-inner { padding: 16px 16px 18px; }
+  .reveal-answer { grid-template-columns: 1fr auto 1fr; gap: 7px; }
+  .answer-box { padding: 9px 8px; }
+  .answer-box .ab-value { font-size: 13px; }
   .summary-score b { font-size: 46px; }
-  .hud-track { width: 92px; }
+  .hud-track { width: 100%; }
+  .hud-seal-label { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hud-track i, .opt, .hud-hearts .heart { transition: none; }
+  .reveal, .reveal-evidence { animation: none; }
+  .hud-track i, .opt, .hud-hearts .heart, .game-clause { transition: none; }
   .loading-dot { animation: none; }
 }

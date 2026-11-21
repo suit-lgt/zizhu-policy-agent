@@ -81,6 +81,18 @@ def conn() -> sqlite3.Connection:
     return c
 
 
+def task_items(raw) -> list[dict]:
+    """兼容历史 triage_task.result_json：缺 items、空串或坏 JSON 时按空列表处理。"""
+    if not isinstance(raw, str) or not raw.strip():
+        return []
+    try:
+        data = json.loads(raw)
+    except (TypeError, ValueError):
+        return []
+    items = data.get('items') if isinstance(data, dict) else (data if isinstance(data, list) else [])
+    return [x for x in (items or []) if isinstance(x, dict)]
+
+
 def init_schema() -> None:
     APP_DB.parent.mkdir(parents=True, exist_ok=True)
     c = conn()

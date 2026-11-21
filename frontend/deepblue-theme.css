@@ -1,0 +1,269 @@
+/* ============================================================
+   资助政策智能体 · 深蓝政务统一主题（theme layer）
+   参考：湖南省智慧资助服务平台（深蓝顶栏 / 白卡 / 浅灰底 / 语义色）
+   加载顺序：style.css → 页面专属 css → 本文件（最后）
+   只覆盖视觉样式，不改动 DOM 结构、功能逻辑与数据展示。
+   ============================================================ */
+
+:root {
+  /* 主色：深蓝政务 */
+  --ink: #16294a;
+  --muted: #5a6e90;
+  --muted-2: #8b9ab2;
+  --line: rgba(21, 71, 168, .14);
+  --line-strong: rgba(21, 71, 168, .26);
+  --blue: #1547a8;
+  --blue-2: #1d4ed8;
+  --blue-3: #3b82f6;
+  --cyan: #38bdf8;
+  --navy: #0b2a63;
+  --teal: #0f9f7f;
+  --amber: #b45309;
+  --gray: #64748b;
+  --red: #bf2f3f;
+  --soft: #f4f7fd;
+  --soft-2: #eaf1fb;
+  --white: #fff;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 16px 42px rgba(11, 42, 99, .11);
+  --shadow-sm: 0 7px 22px rgba(11, 42, 99, .07);
+  --font: "Inter", "PingFang SC", "Microsoft YaHei", "Segoe UI", -apple-system, sans-serif;
+}
+
+/* ---------- 1. 页面底色：浅蓝灰，去掉科技感强渐变 ---------- */
+body {
+  background:
+    radial-gradient(900px 560px at 8% -12%, rgba(29, 78, 216, .09), transparent 62%),
+    radial-gradient(760px 480px at 100% 2%, rgba(56, 189, 248, .06), transparent 58%),
+    linear-gradient(180deg, #f7f9fd 0%, #eef3fa 48%, #f8fafd 100%);
+}
+.auth-page {
+  background:
+    radial-gradient(880px 520px at 15% -5%, rgba(29, 78, 216, .12), transparent 62%),
+    radial-gradient(720px 560px at 100% 100%, rgba(56, 189, 248, .09), transparent 60%),
+    linear-gradient(140deg, #eaf1fb 0%, #f9fbfe 48%, #e9f0fa 100%);
+}
+
+/* ---------- 2. 顶栏：深蓝渐变（参考图顶部蓝条） ---------- */
+.topbar {
+  background: linear-gradient(100deg, #0a2b6b 0%, #103c94 38%, #1748b4 72%, #2563eb 100%);
+  box-shadow: 0 14px 34px rgba(8, 40, 105, .26);
+  border-color: rgba(255, 255, 255, .14);
+  border-radius: 14px;
+}
+.topbar::after { background: linear-gradient(180deg, rgba(255,255,255,.10), transparent 46%); }
+.top-nav a.on {
+  background: rgba(255, 255, 255, .18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22);
+}
+.env-pill { background: rgba(255, 255, 255, .10); border-color: rgba(255, 255, 255, .20); }
+.pulse { background: #5cf2b4; }
+.badge { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.2); }
+
+/* ---------- 3. 侧栏：深蓝导航（对齐参考图左侧蓝栏） ---------- */
+.side-nav {
+  background: linear-gradient(180deg, #123f9e 0%, #0b2f7c 100%);
+  border: 1px solid rgba(255, 255, 255, .10);
+  box-shadow: 0 12px 30px rgba(11, 42, 99, .20);
+}
+.side-nav-title { color: rgba(255, 255, 255, .62); }
+.side-nav-title::before { background: #7cb8ff; box-shadow: 0 0 0 4px rgba(124, 184, 255, .16); }
+.side-nav a { color: rgba(255, 255, 255, .78); }
+.side-nav a:hover { color: #fff; background: rgba(255, 255, 255, .12); }
+.side-nav a.on {
+  color: #fff; font-weight: 700;
+  background: rgba(255, 255, 255, .18);
+  box-shadow: inset 3px 0 0 #8ec5ff;
+}
+.side-tabs { background: #fff; border-color: var(--line); }
+.side-tabs button.on {
+  background: linear-gradient(90deg, rgba(21,71,168,.13), rgba(56,189,248,.05));
+  color: var(--blue); box-shadow: inset 3px 0 0 var(--blue);
+}
+.side-flow i { background: #eaf1fb; color: var(--blue); }
+
+/* ---------- 4. 卡片 / 面板：白卡 + 细边 + 柔阴影 ---------- */
+.panel, .insight-card, .stat-card, .card, section[id^="tab-"],
+.home-widget, .side-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.panel-head h2, .proj, .group-title, .stat-value, .home-widget-head h2,
+.result-head strong, .about-panel h2 { color: var(--navy); }
+.group-title::before { background: linear-gradient(180deg, var(--blue), var(--blue-3)); }
+.stat-card::after { background: radial-gradient(circle, rgba(29,78,216,.12), transparent 70%); }
+.task-row:hover { border-color: #9dbcef; box-shadow: 0 7px 20px rgba(21,71,168,.09); }
+.empty-state { border-color: #c9d9f0; background: #f9fbfe; }
+.empty-state b { color: var(--navy); }
+
+/* ---------- 5. 按钮：深蓝主操作 / 蓝色次操作 ---------- */
+.primary, .btn-main {
+  background: linear-gradient(180deg, #2158bd, #1547a8);
+  box-shadow: 0 7px 18px rgba(21, 71, 168, .24), inset 0 1px 0 rgba(255,255,255,.16);
+  border-radius: 9px;
+}
+.primary:hover, .btn-main:hover { box-shadow: 0 10px 24px rgba(21, 71, 168, .30), inset 0 1px 0 rgba(255,255,255,.16); }
+.ghost, .btn-ghost { color: var(--blue); border-color: #c7d8f0; background: #fff; }
+.ghost:hover, .btn-ghost:hover { border-color: var(--blue-2); color: var(--blue-2); background: #f4f8ff; }
+.danger { color: var(--red); border-color: #f0c6cd; }
+.danger:hover { border-color: #e4a2ae; background: #fff7f8; }
+
+/* ---------- 6. 表单：浅边白底，聚焦深蓝环 ---------- */
+label, .field label { color: #3c5275; }
+select, input[type=text], input[type=number], input[type=password], input[type=file], textarea {
+  border-color: #d5e0f0; background: #fff; border-radius: 9px;
+}
+select:focus, input:focus, textarea:focus { border-color: var(--blue-2); box-shadow: 0 0 0 3px rgba(29,78,216,.12); }
+.field input { border-color: #d5e0f0; }
+.field input:focus { border-color: var(--blue-2); box-shadow: 0 0 0 3px rgba(29,78,216,.12); }
+.grid > div { background: linear-gradient(180deg, #fbfcff, #f5f8fd); border-color: rgba(21,71,168,.10); }
+.consent { background: linear-gradient(180deg, #fbfcff, #f4f8fd); border-color: #ccdaf0; }
+.steps { background: linear-gradient(180deg, #f5f9fe, #eef4fc); border-color: #d6e4f6; color: #2c4b74; }
+.steps b { color: #1d3e6d; }
+.status-card { background: #f7faff; border-color: #c7d9f1; color: #2c4b74; }
+.status-card code { background: #eaf1fb; }
+.msg { color: var(--amber); }
+
+/* ---------- 7. 标签 / 分段：灰色胶囊（参考图通知筛选） ---------- */
+.tabs button, .tabs2 button, .triage-sections-nav a, .step {
+  border-color: #dbe4f1; background: #fff; color: var(--muted);
+}
+.tabs button:hover, .tabs2 button:hover, .triage-sections-nav a:hover {
+  border-color: #a9c1e6; color: var(--blue); background: #f5f8ff;
+}
+.tabs button.on, .tabs2 button.on, .step.on {
+  border-color: var(--blue); color: var(--blue); background: #eef4ff; font-weight: 700;
+}
+.tabs2 { background: #eef3fa; border-color: #dde6f3; }
+.tabs2 button.on { background: #fff; color: var(--blue); box-shadow: 0 3px 10px rgba(21,71,168,.12); }
+.triage-progress-track { background: #e7edf7; }
+.triage-progress-track i { background: linear-gradient(90deg, #1547a8, #1d4ed8); }
+.triage-completion strong { color: var(--blue); }
+.triage-form-kicker, .triage-hero .eyebrow { color: var(--blue); }
+
+/* ---------- 8. 表格：深蓝表头 ---------- */
+table { border-color: var(--line); border-radius: 12px; }
+th { color: #fff; background: linear-gradient(180deg, #1b4fa8, #123f92); border-bottom: 1px solid rgba(255,255,255,.12); }
+td { color: #243c60; border-bottom-color: #eaf0f8; }
+tr:hover td { background: #f6f9fe; }
+code { background: #eaf1fb; color: #17508f; }
+
+/* ---------- 9. 图标 / 文字层级 ---------- */
+.eyebrow, .side-eyebrow, .home-assistant-kicker { color: var(--blue); }
+.widget-mark, .dot { background: #eaf1fb; color: var(--blue); }
+.shortcut-blue { color: #1d4ed8; background: #eaf1fb; }
+.shortcut-teal { color: #0f7a63; background: #e7f6f1; }
+.shortcut-orange { color: #b45309; background: #fdf2e4; }
+.shortcut-violet { color: #5b46a8; background: #f0ecfa; }
+.home-todo-meta b { color: var(--blue); }
+.home-assistant h1 { color: var(--navy); }
+.home-assistant-body > p, .home-assistant-foot { color: #71839a; }
+.home-ask-form { border-color: #bccfe8; }
+.home-ask-form:focus-within { border-color: var(--blue-2); box-shadow: 0 0 0 3px rgba(29,78,216,.12); }
+.home-prompt-list button { border-color: #d9e4f2; color: #526d8e; }
+.home-prompt-list button:hover { border-color: #9dc3ed; color: var(--blue); }
+.policy-levels span { color: #385b86; }
+.policy-levels .level-national img { background: #eaf1fb; }
+.policy-levels .level-province img { background: #e7f6f8; }
+.policy-levels .level-campus img { background: #fdf2e4; }
+
+/* ---------- 10. 弹窗 ---------- */
+.modal { border-radius: 14px; border: 1px solid var(--line); }
+.modal h3 { color: var(--navy); }
+.modal .quote { background: #f6f9fe; border-left-color: var(--blue); }
+.modal-mask { background: rgba(9, 32, 74, .52); }
+
+/* ---------- 11. 政策闯关：从米白案卷切到深蓝政务（结构不变） ---------- */
+.game-page {
+  --case-bg: #f4f7fc;
+  --case-paper: #ffffff;
+  --case-ink: #1f3557;
+  --case-navy: #0b2a63;
+  --case-navy-2: #1747a8;
+  --case-seal: #1d4ed8;
+  --case-seal-soft: #eaf1fb;
+  --case-rule: rgba(21, 71, 168, .16);
+  --case-rule-soft: rgba(21, 71, 168, .09);
+  --case-teal: #0f7a63;
+  --case-amber: #a8650c;
+  --case-gray: #64748b;
+  --case-alert: #c2410c;
+  --case-alert-soft: #fff1e8;
+  --case-shadow: 0 14px 34px rgba(11, 42, 99, .13);
+}
+body.game-page { background: linear-gradient(180deg, #f7f9fd 0%, #eef3fa 52%, #f8fafd 100%); }
+.game-page .topbar {
+  background: linear-gradient(100deg, #0a2b6b 0%, #103c94 38%, #1748b4 72%, #2563eb 100%);
+  box-shadow: var(--case-shadow), inset 0 -2px 0 rgba(142, 197, 255, .42);
+}
+.game-page .top-nav a.on { background: rgba(255,255,255,.18); color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.22); }
+.game-page .env-pill { background: rgba(255,255,255,.12); color: #e8edf6; border-color: rgba(255,255,255,.20); }
+.game-page .disclaimer { background: #eef4ff; border-color: rgba(21,71,168,.24); color: #274b82; }
+.game-page .btn-main {
+  background: linear-gradient(180deg, #2158bd, #1547a8);
+  box-shadow: 0 8px 18px rgba(21,71,168,.26), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.game-page .btn-main:hover {
+  box-shadow: 0 12px 24px rgba(21,71,168,.32), inset 0 1px 0 rgba(255,255,255,.18);
+}
+.game-page .btn-ghost:hover { border-color: var(--case-seal); color: var(--case-seal); }
+.game-page .ghost { color: var(--case-seal); }
+
+/* 闯关语义色：错误/陷阱用暖橙红，正确用青绿，主色统一深蓝 */
+.reveal.no { border-color: rgba(194, 65, 12, .45); }
+.reveal.no .reveal-ribbon { background: linear-gradient(135deg, #b34013, #d95f28); }
+.reveal.no .reveal-icon { background: var(--case-alert-soft); color: var(--case-alert); }
+.reveal.no .answer-box.wrong { background: var(--case-alert-soft); border-color: rgba(194,65,12,.28); }
+.reveal.no .answer-box.wrong .ab-value { text-decoration-color: var(--case-alert); }
+.reveal.ok { border-color: rgba(15, 122, 99, .45); }
+.reveal.ok .reveal-ribbon { background: linear-gradient(135deg, #0f7a63, #12957b); }
+.reveal.ok .answer-box.right { background: #eaf7f3; border-color: rgba(15,122,99,.36); }
+.reveal.review { border-color: rgba(23, 71, 168, .4); }
+.reveal.review .reveal-ribbon { background: linear-gradient(135deg, #0b2a63, #1c4fa8); }
+.reveal.review .reveal-icon { background: #eaf7f3; color: var(--case-teal); }
+.answer-arrow { color: var(--case-seal); }
+.trap-tag {
+  color: var(--case-alert); background: var(--case-alert-soft);
+  border-color: rgba(194, 65, 12, .4);
+}
+.game-clause { border-left-color: var(--case-seal); }
+.game-clause:hover { background: var(--case-seal-soft); border-color: var(--case-seal); }
+.reveal-evidence .game-clause { background: #f8faff; }
+.wi-detail summary, .intro-best, .failed-best { color: var(--case-seal); }
+.failed-tip { background: var(--case-alert-soft); border-left-color: var(--case-alert); color: #9a3b13 !important; }
+.reveal-missing, .hint-penalty { background: #fdf6e8; border-left-color: #d19b34; color: var(--case-amber); }
+.game-hint:hover { color: var(--case-seal); border-color: var(--case-seal); background: var(--case-seal-soft); }
+.game-hint-text { background: #f3f8ff; border-left-color: var(--case-seal); }
+.hud-track i.done { background: var(--case-seal); }
+.hud-track i.current { background: linear-gradient(90deg, var(--case-seal), #4b8ae8); }
+.hud-hearts { color: #d2542a; }
+.tr-bar i { background: var(--case-seal); }
+.loading-dot { border-color: var(--case-rule); border-top-color: var(--case-seal); }
+.review-done-mark { background: #eaf7f3; color: var(--case-teal); border-color: var(--case-teal); }
+.summary-stars { color: #c8890f; }
+.wrong-item { border-left-color: var(--case-alert); }
+.game-card, .reveal, .reveal-evidence, .summary {
+  box-shadow: 0 18px 40px rgba(11, 42, 99, .11), 0 2px 6px rgba(11, 42, 99, .05);
+}
+.sound-toggle { color: #e8f1ff; }
+
+/* ---------- 11b. 子页 polish 层残留中蓝 → 深蓝 ---------- */
+.progress-shortcuts a > span { color: #1547a8; background: #eaf1fb; }
+.journey-active .journey-mark { border-color: #1d4ed8; color: #1547a8; box-shadow: 0 0 0 4px #e4ecfa; }
+.event-dot { background: #1d4ed8; }
+.journey-note { border-left-color: #1d4ed8; color: #3c5275; background: #f5f9fe; }
+.progress-page .progress-journey { background: linear-gradient(130deg, #f7f9fd, #f1f5fb); border-color: #dfe7f2; }
+.consult-heading .eyebrow { color: #1547a8; }
+.welcome-kicker { background: #eaf1fb; color: #1547a8; }
+.starter-grid button:hover { border-color: #9dbcef; background: #f5f9fe; }
+.qa-workbench .consult-composer { background: linear-gradient(145deg, #f7f9fd, #f2f6fb); }
+
+/* ---------- 12. 焦点可见性：统一深蓝环 ---------- */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, summary:focus-visible {
+  outline: 3px solid rgba(56, 189, 248, .55);
+  outline-offset: 2px;
+}

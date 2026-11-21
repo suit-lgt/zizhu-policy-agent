@@ -7,6 +7,7 @@
 <title>政策闯关 · 资助政策智能体</title>
 <link rel="stylesheet" href="static/style.css">
 <link rel="stylesheet" href="static/game.css">
+<link rel="stylesheet" href="static/deepblue-theme.css">
 </head>
 <body class="student-app game-page">
 <div class="app-shell game-shell">
@@ -26,6 +27,7 @@
       <a class="on" href="game.html">政策闯关</a>
     </nav>
     <div class="top-actions">
+      <button class="sound-toggle" id="sound-toggle" type="button" aria-label="开启音效" title="音效开关" aria-pressed="false">♪</button>
       <span class="env-pill"><span class="pulse"></span>离线规则模式</span>
     </div>
   </header>
@@ -34,7 +36,7 @@
     <div class="game-hud hidden" id="hud">
       <div class="hud-left">
         <div class="hud-level"><b id="hud-idx">1</b><span id="hud-total">/ 6 关</span></div>
-        <div class="hud-track" role="progressbar" aria-label="闯关进度" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><i id="hud-bar"></i></div>
+        <div class="hud-track" role="progressbar" aria-label="闯关进度" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><div class="hud-segs" id="hud-bar"></div></div>
       </div>
       <div class="hud-right">
         <div class="hud-hearts" id="hud-hearts" aria-label="信任值 3 点"></div>

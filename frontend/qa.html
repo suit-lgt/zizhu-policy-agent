@@ -6,7 +6,8 @@
 <title>政策问答 · 资助政策智能体</title>
 <link rel="stylesheet" href="static/style.css">
 <link rel="stylesheet" href="static/qa-workbench.css">
-<link rel="stylesheet" href="static/qa-workbench-polish.css">
+<link rel="stylesheet" href="static/qa-workbench-polish.css?v=20261121f">
+<link rel="stylesheet" href="static/deepblue-theme.css">
 </head>
 <body class="student-app consult-page">
 <div class="app-shell">
@@ -21,7 +22,7 @@
     <nav class="top-nav">
       <a href="index.html">学生端</a>
       <a href="triage.html">AI 初判</a>
-      <a class="on" href="qa.html">政策问答</a>
+      <a class="on" href="qa.html" aria-current="page">政策问答</a>
       <a href="progress.html">办理进度</a>
       <a href="game.html">政策闯关</a>
     </nav>
@@ -44,7 +45,8 @@
     <section class="panel consult-dialogue" aria-label="政策对话">
       <div class="dialogue-header"><div><div class="eyebrow">向政策库提问</div><h2 id="session-title">开始一次政策咨询</h2></div><div class="dialogue-tools"><button class="ghost" id="export-all" disabled>导出记录</button><button class="ghost" id="delete-session" disabled>删除</button></div></div>
       <div id="version-notice" class="version-notice" hidden></div>
-      <div id="qa" class="conversation" aria-live="polite">
+      <div id="qa-status" class="qa-status" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+      <div id="qa" class="conversation" aria-live="polite" aria-busy="false">
         <div class="consult-welcome">
           <div class="consult-welcome-hero"><div class="consult-welcome-copy"><span class="welcome-kicker">问政策 · 查原文 · 找下一步</span><h2>你想先了解哪一项？</h2><p>从具体资助项目开始，再继续追问条件、材料或办理方式。</p></div><img class="welcome-art" src="static/assets/qa-welcome-book.svg" alt="" width="116" height="104"></div>
           <div class="starter-heading"><b>从常见问题开始</b><span>选择后可编辑，再手动发送</span></div>
@@ -64,5 +66,5 @@
 </div>
 <dialog id="clause-dialog" class="clause-dialog"><div class="panel-head"><h2 id="m-title">条款原文</h2><button class="ghost" id="close-clause" aria-label="关闭原文">关闭 ×</button></div><p id="m-doc" class="hint"></p><div id="m-quote" class="clause-text"></div><p id="m-flag" class="hint"></p><a id="m-link" class="btn-ghost" target="_blank" rel="noopener noreferrer">打开官方来源 ↗</a></dialog>
 <div id="toast" class="consult-toast" role="status" hidden></div>
-<script src="static/qa-workbench.js" defer></script>
+<script src="static/qa-workbench.js?v=20261121f" defer></script>
 </body></html>
